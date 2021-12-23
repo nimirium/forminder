@@ -33,7 +33,7 @@ def create_form_command(user_id, user_name, command_args: List[str], response_ur
     form = SlackForm(
         user_id=user_id,
         user_name=user_name,
-        form_name=params.form_name,
+        name=params.form_name,
         fields=fields,
         public=params.public,
     )
@@ -43,7 +43,7 @@ def create_form_command(user_id, user_name, command_args: List[str], response_ur
 
 def _create_form__save_and_respond(form, response_url):
     form.save()
-    response = slack_blocks.text_response(f""":white_check_mark: Form ’{form.form_name}' was created
+    response = slack_blocks.text_response(f""":white_check_mark: Form ’{form.name}' was created
 :information_source: Use “/ask-remind list forms” to see your forms
 :arrow_right: Next, use “/ask-remind schedule” to schedule reminders to fill your form
 """)
@@ -55,15 +55,47 @@ def list_forms_command(user_id, response_url):
     return
 
 
+def _get_list_form_blocks(user_id):
+    blocks = []
+    for form in SlackForm.objects(Q(user_id=user_id) or Q(public=True)):
+        blocks.append(slack_blocks.text_block_item(slack_blocks.form_list_item(form)))
+        blocks.append(slack_blocks.form_list_item_action_buttons(str(form.id)))
+    return blocks
+
+
 def _list_forms__fetch_and_respond(user_id, response_url):
-    response_text = ""
-    for form in SlackForm.objects(Q(user_id=user_id) | Q(public=True)):
-        fields_description = ', '.join([f"{f.title} ({f.type})" for f in form.fields])
-        response_text += f""":page_with_curl: {form.form_name} 
-Fields: {fields_description}
-Not scheduled
-Created by: {form.user_name}
-"""
-    response = slack_blocks.text_response(response_text)
-    # return response
+    blocks = _get_list_form_blocks(user_id)
+    response = dict(blocks=blocks)
     requests.post(response_url, json.dumps(response))
+
+
+def delete_form_command(form_id, user_id, response_url):
+    Thread(target=_delete_form_and_respond, kwargs=dict(form_id=form_id, user_id=user_id, response_url=response_url)).start()
+    return
+
+
+def _delete_form_and_respond(form_id, user_id, response_url):
+    form = SlackForm.objects(id=form_id).first()
+    form.delete()
+    action_result = slack_blocks.text_block_item(f":white_check_mark: Deleted form '{form.name}'")
+    form_blocks = _get_list_form_blocks(user_id)
+    response = dict(blocks=[action_result] + form_blocks)
+    requests.post(response_url, json.dumps(response))
+
+
+def preview_form_command(form_id, response_url):
+    Thread(target=_send_preview_form_response, kwargs=dict(form_id=form_id, response_url=response_url)).start()
+    return
+
+
+def _send_preview_form_response(form_id, response_url):
+    form = SlackForm.objects(id=form_id).first()
+    blocks = [slack_blocks.text_block_item(form.name)]
+    for field in form.fields:
+        if field.type == 'text':
+            blocks.append(slack_blocks.text_input_block(field.title, multiline=False))
+        elif field.type == 'text-multiline':
+            blocks.append(slack_blocks.text_input_block(field.title, multiline=True))
+    blocks.append(slack_blocks.button_block())
+    result = dict(blocks=blocks)
+    requests.post(response_url, json.dumps(result))

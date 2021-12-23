@@ -1,6 +1,6 @@
 from random import randint
 
-__all__ = ['text_response', 'help_text_block', 'random_skin_tone', 'form_create_help_text']
+__all__ = ['text_response', 'help_text_block', 'random_skin_tone', 'form_create_help_text', 'text_block_item']
 
 DAYS_OF_THE_WEEK = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
 
@@ -9,7 +9,7 @@ def random_skin_tone():
     return f":skin-tone-{randint(1, 6)}:"
 
 
-def text_block(text):
+def text_block_item(text):
     return {
         "type": "section",
         "text": {
@@ -21,7 +21,7 @@ def text_block(text):
 
 def text_response(text):
     return {
-        "blocks": [text_block(text)]
+        "blocks": [text_block_item(text)]
     }
 
 
@@ -94,7 +94,7 @@ help_text = f""":information_desk_person:{random_skin_tone()} Usage:
 :four: /ask-remind list schedules"""
 
 help_text_block = {
-    "blocks": [text_block(help_text)]
+    "blocks": [text_block_item(help_text)]
 }
 
 form_create_help_text = f""":information_desk_person:{random_skin_tone()} create-form usage:
@@ -104,3 +104,69 @@ form_create_help_text = f""":information_desk_person:{random_skin_tone()} create
 --text-multiline adds a multi-line text field to the form
 --public use this to make your form public, otherwise it will only be available to you
 """
+
+
+def form_list_item_action_buttons(form_id):
+    return {
+        "type": "actions",
+        "elements": [
+            {
+                "type": "button",
+                "text": {
+                    "type": "plain_text",
+                    "text": "Schedule",
+                    "emoji": True
+                },
+                "value": form_id,
+                "action_id": "schedule-form",
+            },
+            {
+                "type": "button",
+                "text": {
+                    "type": "plain_text",
+                    "text": "Preview",
+                    "emoji": True
+                },
+                "value": form_id,
+                "action_id": "preview-form",
+            },
+            {
+                "type": "button",
+                "text": {
+                    "type": "plain_text",
+                    "text": "Delete",
+                    "emoji": True
+                },
+                "value": form_id,
+                "action_id": "delete-form",
+            }
+        ]
+    }
+
+
+def form_list_item(form):
+    fields_description = ', '.join([f"{f.title} ({f.type})" for f in form.fields])
+    return f""":page_with_curl: {form.name} 
+Fields: {fields_description}
+Not scheduled
+Created by: {form.user_name}, {'public' if form.public else 'private'}"""
+
+
+def text_input_block(title, multiline=False):
+    return {
+        "type": "input",
+        "element": {
+            "type": "plain_text_input",
+            "multiline": multiline,
+            "action_id": "plain_text_input-action"
+        },
+        "label": {
+            "type": "plain_text",
+            "text": title,
+            "emoji": True
+        }
+    }
+
+
+def button_block():
+    return None

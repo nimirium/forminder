@@ -9,6 +9,7 @@ class SlackFormField(EmbeddedDocument):
 class SlackForm(Document):
     user_id = StringField()
     user_name = StringField()
-    form_name = StringField()
+    name = StringField()
     fields = ListField(EmbeddedDocumentField(SlackFormField))
     public = BooleanField()
+    meta = {'strict': False}

@@ -43,5 +43,19 @@ def slack_webhook():
 
 @app.route("/slack-interactive-endpoint", methods=['POST'])
 def slack_interactive_endpoint():
+    print(f"request.form.keys(): {request.form.keys()}")
     print(f"request.form: {request.form}")
-    return Response(status=200)
+    payload = json.loads(request.form['payload'])
+    response_url = payload['response_url']
+    user_id = payload['user']['id']
+    result = None
+    for action in payload['actions']:
+        action_id = action['action_id']
+        value = action['value']
+        if action_id == 'delete-form':
+            result = forms.delete_form_command(value, user_id, response_url)
+        elif action_id == 'preview-form':
+            result = forms.preview_form_command(value, response_url)
+    if result:
+        return Response(response=json.dumps(result), status=200, mimetype="application/json")
+    return Response(status=200, mimetype="application/json")
