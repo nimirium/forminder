@@ -5,6 +5,7 @@ from typing import List
 
 import requests as requests
 
+from models.schedule import SlackFormSchedule
 from util import slack_blocks
 from models.form import SlackForm, SlackFormField
 from mongoengine import Q
@@ -58,7 +59,8 @@ def list_forms_command(user_id, response_url):
 def _get_list_form_blocks(user_id):
     blocks = []
     for form in SlackForm.objects(Q(user_id=user_id) or Q(public=True)):
-        blocks.append(slack_blocks.text_block_item(slack_blocks.form_list_item(form)))
+        schedules = SlackFormSchedule.objects(form_id=str(form.id))
+        blocks.append(slack_blocks.text_block_item(slack_blocks.form_list_item(form, schedules)))
         blocks.append(slack_blocks.form_list_item_action_buttons(str(form.id)))
     return blocks
 

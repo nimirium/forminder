@@ -2,7 +2,7 @@ from random import randint
 
 __all__ = ['text_response', 'help_text_block', 'random_skin_tone', 'form_create_help_text', 'text_block_item']
 
-DAYS_OF_THE_WEEK = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
+from util.utils import DAYS_OF_THE_WEEK
 
 
 def random_skin_tone():
@@ -36,7 +36,7 @@ def header_block(title):
     }
 
 
-def checkboxes_block(title, options):
+def checkboxes_block(title, options, action_id):
     return {
         "type": "section",
         "text": {
@@ -54,12 +54,12 @@ def checkboxes_block(title, options):
                     "value": option
                 } for option in options
             ],
-            "action_id": "checkboxes-action"
+            "action_id": action_id,
         }
     }
 
 
-def time_picker_block(title, initial_time):
+def time_picker_block(title, initial_time, action_id):
     return {
         "type": "section",
         "text": {
@@ -74,7 +74,7 @@ def time_picker_block(title, initial_time):
                 "text": "Select time",
                 "emoji": True
             },
-            "action_id": "timepicker-action"
+            "action_id": action_id
         }
     }
 
@@ -100,9 +100,8 @@ def button_block(text, value, action_id):
 def reminder_select_block(form_id):
     return {
         "blocks": [
-            header_block("Hi! When would you like to be reminded to fill the form?"),
-            checkboxes_block("When do you want to be notified?", DAYS_OF_THE_WEEK),
-            time_picker_block("At", "09:00"),
+            checkboxes_block("When would you like to be reminded to fill the form?", DAYS_OF_THE_WEEK, "form-weekdays"),
+            time_picker_block("At", "09:00", "form-time"),
             button_block(text="Send", value=form_id, action_id="create-form-schedule"),
         ]
     }
@@ -165,11 +164,17 @@ def form_list_item_action_buttons(form_id):
     }
 
 
-def form_list_item(form):
+def form_list_item(form, schedules):
     fields_description = ', '.join([f"{f.title} ({f.type})" for f in form.fields])
+
+    if schedules.count() == 0:
+        schedule_descriptions = 'Not scheduled'
+    else:
+        schedule_descriptions = 'Scheduled for: \n' + '\n'.join(
+            ["- " + schedule.schedule_description() for schedule in schedules])
     return f""":page_with_curl: {form.name} 
 Fields: {fields_description}
-Not scheduled
+{schedule_descriptions}
 Created by: {form.user_name}, {'public' if form.public else 'private'}"""
 
 

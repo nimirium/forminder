@@ -1,7 +1,4 @@
-import pytz as pytz
+import datetime
 
-
-def get_datetime_as_timezone(dt, tz=pytz.utc):
-    if not dt.tzinfo:
-        dt = dt.replace(tzinfo=pytz.utc)
-    return dt.astimezone(tz)
+DAYS_OF_THE_WEEK = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+LOCAL_TIMEZONE = datetime.datetime.now(datetime.timezone.utc).astimezone().tzinfo

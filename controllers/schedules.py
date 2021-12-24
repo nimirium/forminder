@@ -1,9 +1,19 @@
 import json
+import logging
+import os
 from threading import Thread
 
 import requests as requests
+from slack_sdk import WebClient
+from slack_sdk.errors import SlackApiError
+from dotenv import load_dotenv
 
+from models.schedule import SlackFormSchedule, TimeField
 from util import slack_blocks
+from util.utils import DAYS_OF_THE_WEEK
+
+load_dotenv()
+client = WebClient(token=os.environ.get("SLACK_BOT_TOKEN"))
 
 
 def handle_schedule_command():
@@ -24,10 +34,48 @@ def _send_schedule_form_response(form_id, response_url):
     requests.post(response_url, json.dumps(result))
 
 
-def create_form_schedule_command(form_id, response_url):
-    Thread(target=_create_schedule_and_respond, kwargs=dict(form_id=form_id, response_url=response_url)).start()
+def create_form_schedule_command(form_id, user_id, user_name, schedule_form_state, response_url):
+    days_of_the_week = []
+    at_time = None
+    for part in schedule_form_state.values():
+        if part.get('form-weekdays'):
+            for selected_option in part['form-weekdays']['selected_options']:
+                weekday_number = DAYS_OF_THE_WEEK.index(selected_option['value'])
+                days_of_the_week.append(weekday_number)
+        elif part.get('form-time'):
+            at_time = part['form-time']['selected_time']
+    Thread(target=_create_schedule_and_respond,
+           kwargs=dict(form_id=form_id, user_id=user_id, user_name=user_name, days_of_the_week=days_of_the_week,
+                       at_time=at_time, response_url=response_url)).start()
     return
 
 
-def _create_schedule_and_respond(form_id, response_url):
-    raise NotImplementedError
+def _create_schedule_and_respond(form_id, user_id, user_name, days_of_the_week, at_time, response_url):
+    try:
+        result = client.users_info(user=user_id)
+        logging.info(result)
+    except SlackApiError as e:
+        logging.error("Error fetching conversations: {}".format(e))
+        return slack_blocks.text_response(":x: Failed to create schedule :x:")
+    tz_name = result.data['user']['tz']
+    hour = int(at_time.split(':')[0])
+    minute = int(at_time.split(':')[1])
+    time_local = TimeField(hour=hour, minute=minute)
+    existing = SlackFormSchedule.objects(user_id=user_id, form_id=form_id, days_of_the_week=days_of_the_week,
+                                         timezone=tz_name, time_local=time_local)
+    if existing.count() > 0:
+        result = slack_blocks.text_response(":warning: This schedule already exists! :warning:")
+        requests.post(response_url, json.dumps(result))
+        return
+    schedule = SlackFormSchedule(
+        user_id=user_id,
+        user_name=user_name,
+        form_id=form_id,
+        days_of_the_week=days_of_the_week,
+        timezone=tz_name,
+        time_local=time_local,
+    )
+    schedule.save_and_schedule_next()
+
+    result = slack_blocks.text_response(":clock3: Schedule was created :clock3:")
+    requests.post(response_url, json.dumps(result))

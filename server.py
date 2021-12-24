@@ -10,8 +10,6 @@ from models.connect import connect_to_mongo
 app = Flask(__name__)
 connect_to_mongo()
 
-DAYS_OF_THE_WEEK = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
-
 
 @app.route("/slack-webhook", methods=['POST'])
 def slack_webhook():
@@ -48,9 +46,12 @@ def slack_interactive_endpoint():
     payload = json.loads(request.form['payload'])
     response_url = payload['response_url']
     user_id = payload['user']['id']
+    user_name = payload['user']['username']
     result = None
     for action in payload['actions']:
         action_id = action['action_id']
+        if action_id in ('form-weekdays', 'form-time'):
+            return Response(status=200, mimetype="application/json")
         value = action['value']
         if action_id == 'delete-form':
             result = forms.delete_form_command(value, user_id, response_url)
@@ -59,7 +60,8 @@ def slack_interactive_endpoint():
         elif action_id == 'schedule-form':
             result = schedules.schedule_form_command(value, response_url)
         elif action_id == 'create-form-schedule':
-            result = schedules.create_form_schedule_command(value, response_url)
+            schedule_form_state = payload['state']['values']
+            result = schedules.create_form_schedule_command(value, user_id, user_name, schedule_form_state, response_url)
     if result:
         return Response(response=json.dumps(result), status=200, mimetype="application/json")
     return Response(status=200, mimetype="application/json")
