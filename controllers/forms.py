@@ -90,12 +90,16 @@ def preview_form_command(form_id, response_url):
 
 def _send_preview_form_response(form_id, response_url):
     form = SlackForm.objects(id=form_id).first()
-    blocks = [slack_blocks.text_block_item(form.name)]
+    blocks = [
+        slack_blocks.text_block_item(":eyes: Start of preview :eyes:"),
+        slack_blocks.text_block_item(form.name),
+    ]
     for field in form.fields:
         if field.type == 'text':
             blocks.append(slack_blocks.text_input_block(field.title, multiline=False))
         elif field.type == 'text-multiline':
             blocks.append(slack_blocks.text_input_block(field.title, multiline=True))
-    blocks.append(slack_blocks.button_block())
+    blocks.append(slack_blocks.button_block(text="Submit", value=form_id, action_id="preview-submit-form"))
+    blocks.append(slack_blocks.text_block_item(":eyes: End of preview :eyes:"))
     result = dict(blocks=blocks)
     requests.post(response_url, json.dumps(result))

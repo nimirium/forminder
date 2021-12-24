@@ -79,13 +79,34 @@ def time_picker_block(title, initial_time):
     }
 
 
-reminder_select_block = {
-    "blocks": [
-        header_block("Hi! When would you like to be reminded to fill the form?"),
-        checkboxes_block("When do you want to be notified?", DAYS_OF_THE_WEEK),
-        time_picker_block("At", "09:00"),
-    ]
-}
+def button_block(text, value, action_id):
+    return {
+        "type": "actions",
+        "elements": [
+            {
+                "type": "button",
+                "text": {
+                    "type": "plain_text",
+                    "text": text,
+                    "emoji": True
+                },
+                "value": value,
+                "action_id": action_id
+            }
+        ]
+    }
+
+
+def reminder_select_block(form_id):
+    return {
+        "blocks": [
+            header_block("Hi! When would you like to be reminded to fill the form?"),
+            checkboxes_block("When do you want to be notified?", DAYS_OF_THE_WEEK),
+            time_picker_block("At", "09:00"),
+            button_block(text="Send", value=form_id, action_id="create-form-schedule"),
+        ]
+    }
+
 
 help_text = f""":information_desk_person:{random_skin_tone()} Usage:
 :one: /ask-remind create-form
@@ -167,6 +188,3 @@ def text_input_block(title, multiline=False):
         }
     }
 
-
-def button_block():
-    return None

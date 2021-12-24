@@ -56,6 +56,10 @@ def slack_interactive_endpoint():
             result = forms.delete_form_command(value, user_id, response_url)
         elif action_id == 'preview-form':
             result = forms.preview_form_command(value, response_url)
+        elif action_id == 'schedule-form':
+            result = schedules.schedule_form_command(value, response_url)
+        elif action_id == 'create-form-schedule':
+            result = schedules.create_form_schedule_command(value, response_url)
     if result:
         return Response(response=json.dumps(result), status=200, mimetype="application/json")
     return Response(status=200, mimetype="application/json")
