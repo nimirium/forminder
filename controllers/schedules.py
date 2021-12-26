@@ -8,20 +8,15 @@ from slack_sdk import WebClient
 from slack_sdk.errors import SlackApiError
 from dotenv import load_dotenv
 
-from models.schedule import SlackFormSchedule, TimeField
-from util import slack_blocks
+from controllers.shared import list_form_blocks
+from models.form import SlackForm
+from models.schedule import SlackFormSchedule, TimeField, ScheduledEvent
+from util import slack_blocks, slack_scheduler
+from util.slack_scheduler import delete_slack_scheduled_message
 from util.utils import DAYS_OF_THE_WEEK
 
 load_dotenv()
 client = WebClient(token=os.environ.get("SLACK_BOT_TOKEN"))
-
-
-def handle_schedule_command():
-    raise NotImplementedError
-
-
-def list_schedules():
-    raise NotImplementedError
 
 
 def schedule_form_command(form_id, response_url):
@@ -75,7 +70,41 @@ def _create_schedule_and_respond(form_id, user_id, user_name, days_of_the_week, 
         timezone=tz_name,
         time_local=time_local,
     )
-    schedule.save_and_schedule_next()
+    next_event = schedule.save_and_schedule_next()
+    try:
+        scheduled_message_id = slack_scheduler.schedule_slack_message(schedule, next_event)
+    except Exception as e:
+        next_event.delete()
+        schedule.delete()
+        return slack_blocks.text_response(":x: Failed to create schedule :x:")
+
+    next_event.scheduled_message_id = scheduled_message_id
+    next_event.save()
 
     result = slack_blocks.text_response(":clock3: Schedule was created :clock3:")
+    requests.post(response_url, json.dumps(result))
+
+
+def delete_schedule_command(schedule_id, user_id, response_url):
+    Thread(target=_delete_schedule_and_respond,
+           kwargs=dict(schedule_id=schedule_id, user_id=user_id, response_url=response_url)).start()
+    return
+
+
+def _delete_schedule_and_respond(schedule_id, user_id, response_url):
+    schedule = SlackFormSchedule.objects(id=schedule_id).first()
+    if schedule:
+        form = SlackForm.objects(id=schedule.form_id).first()
+        for event in ScheduledEvent.objects(schedule=schedule):
+            delete_slack_scheduled_message(schedule.user_id, event.slack_message_id)
+            event.delete()
+        schedule.delete()
+        result = slack_blocks.text_block_item(f":white_check_mark: Deleted schedule for {form.name} form - "
+                                              f"{schedule.schedule_description()}")
+        blocks = list_form_blocks(user_id)
+        response = dict(blocks=[result, slack_blocks.divider] + blocks)
+        requests.post(response_url, json.dumps(response))
+        return
+    logging.warning(f"can't delete schedule {schedule_id} because it doesn't exist")
+    result = slack_blocks.text_response(":x: Failed to delete schedule :x:")
     requests.post(response_url, json.dumps(result))

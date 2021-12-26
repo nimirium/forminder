@@ -6,7 +6,13 @@ from util.utils import DAYS_OF_THE_WEEK
 
 
 def random_skin_tone():
-    return f":skin-tone-{randint(1, 6)}:"
+    tone = randint(1, 6)
+    return '' if tone == 1 else f":skin-tone-{tone}:"
+
+
+divider = {
+    "type": "divider"
+}
 
 
 def text_block_item(text):
@@ -108,17 +114,15 @@ def reminder_select_block(form_id):
 
 
 help_text = f""":information_desk_person:{random_skin_tone()} Usage:
-:one: /ask-remind create-form
-:two: /ask-remind schedule
-:three: /ask-remind list forms
-:four: /ask-remind list schedules"""
+:one: /ask-remind create form
+:two: /ask-remind list forms"""
 
 help_text_block = {
     "blocks": [text_block_item(help_text)]
 }
 
 form_create_help_text = f""":information_desk_person:{random_skin_tone()} create-form usage:
-/ask-remind create-form --form-name=“My Form” --text=“Name” --text=“Age” --text-multiline=“Hobbies”
+/ask-remind create form --form-name=“My Form” --text=“Name” --text=“Age” --text-multiline=“Hobbies”
 --form-name is the name of the form
 --text adds a text field to the form
 --text-multiline adds a multi-line text field to the form
@@ -154,7 +158,7 @@ def form_list_item_action_buttons(form_id):
                 "type": "button",
                 "text": {
                     "type": "plain_text",
-                    "text": "Delete",
+                    "text": "Delete Form",
                     "emoji": True
                 },
                 "value": form_id,
@@ -164,18 +168,40 @@ def form_list_item_action_buttons(form_id):
     }
 
 
+def text_and_button(text, button_text, value, action_id):
+    return {
+        "type": "section",
+        "text": {
+            "type": "mrkdwn",
+            "text": text
+        },
+        "accessory": {
+            "type": "button",
+            "text": {
+                "type": "plain_text",
+                "text": button_text,
+                "emoji": True
+            },
+            "value": value,
+            "action_id": action_id
+        }
+    }
+
+
 def form_list_item(form, schedules):
     fields_description = ', '.join([f"{f.title} ({f.type})" for f in form.fields])
-
+    blocks = [
+        text_block_item(f":page_with_curl: {form.name}"),
+        text_block_item(f"Fields: {fields_description}"),
+    ]
     if schedules.count() == 0:
-        schedule_descriptions = 'Not scheduled'
+        blocks.append(text_block_item("Not scheduled"))
     else:
-        schedule_descriptions = 'Scheduled for: \n' + '\n'.join(
-            ["- " + schedule.schedule_description() for schedule in schedules])
-    return f""":page_with_curl: {form.name} 
-Fields: {fields_description}
-{schedule_descriptions}
-Created by: {form.user_name}, {'public' if form.public else 'private'}"""
+        blocks.append(text_block_item("Scheduled for:"))
+        for schedule in schedules:
+            text = "- " + schedule.schedule_description()
+            blocks.append(text_and_button(text, "Delete Schedule", str(schedule.id), 'delete-schedule'))
+    return blocks
 
 
 def text_input_block(title, multiline=False):
@@ -193,3 +219,15 @@ def text_input_block(title, multiline=False):
         }
     }
 
+
+def form_slack_blocks(form, action_id):
+    blocks = [
+        text_block_item(form.name),
+    ]
+    for field in form.fields:
+        if field.type == 'text':
+            blocks.append(text_input_block(field.title, multiline=False))
+        elif field.type == 'text-multiline':
+            blocks.append(text_input_block(field.title, multiline=True))
+    blocks.append(button_block(text="Submit", value=str(form.id), action_id=action_id))
+    return blocks

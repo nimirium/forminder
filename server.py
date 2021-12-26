@@ -20,19 +20,12 @@ def slack_webhook():
     command_text = (request.form['text'] or '').replace("”", '"').replace("“", '"')
     args = shlex.split(command_text)
     result = None
-    if len(args) == 0:
+    if len(args) < 2:
         result = slack_blocks.help_text_block
-    elif args[0] == "create-form":
-        result = forms.create_form_command(user_id, user_name, args, response_url)
-    elif args[0] == "schedule":
-        result = schedules.handle_schedule_command()
-    elif args[0] == "list":
-        if len(args) < 2:
-            result = slack_blocks.help_text_block
-        elif args[1] == "forms":
-            result = forms.list_forms_command(user_id, response_url)
-        elif args[1] == "schedules":
-            result = schedules.list_schedules()
+    elif args[0] == "create" and args[1] == "form":
+        result = forms.create_form_command(user_id, user_name, args[2:], response_url)
+    elif args[0] == "list" and args[1] == "forms":
+        result = forms.list_forms_command(user_id, response_url)
     print(f"result is {result}")
     if result:
         return Response(response=json.dumps(result), status=200, mimetype="application/json")
@@ -62,6 +55,8 @@ def slack_interactive_endpoint():
         elif action_id == 'create-form-schedule':
             schedule_form_state = payload['state']['values']
             result = schedules.create_form_schedule_command(value, user_id, user_name, schedule_form_state, response_url)
+        elif action_id == 'delete-schedule':
+            result = schedules.delete_schedule_command(value, user_id, response_url)
     if result:
         return Response(response=json.dumps(result), status=200, mimetype="application/json")
     return Response(status=200, mimetype="application/json")
