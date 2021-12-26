@@ -32,18 +32,24 @@ def create_form_command(user_id, user_name, command_args: List[str], response_ur
         fields.append(SlackFormField(type='text', title=field_name))
     for field_name in params.text_multiline:
         fields.append(SlackFormField(type='text-multiline', title=field_name))
-    form = SlackForm(
+    form_kwargs = dict(
         user_id=user_id,
         user_name=user_name,
         name=params.form_name,
         fields=fields,
         public=params.public,
     )
-    Thread(target=_create_form__save_and_respond, kwargs=dict(form=form, response_url=response_url)).start()
+    Thread(target=_create_form__save_and_respond, kwargs=dict(form_kwargs=form_kwargs, response_url=response_url)).start()
     return
 
 
-def _create_form__save_and_respond(form, response_url):
+def _create_form__save_and_respond(form_kwargs, response_url):
+    existing = SlackForm.objects(**form_kwargs)
+    if existing:
+        response = slack_blocks.text_response(":warning: This form already exists! :warning:")
+        requests.post(response_url, json.dumps(response))
+        return
+    form = SlackForm(**form_kwargs)
     form.save()
     response = slack_blocks.text_response(f""":white_check_mark: Form ’{form.name}' was created
 :information_source: Use “/ask-remind list forms” to see your forms
@@ -70,6 +76,10 @@ def delete_form_command(form_id, user_id, response_url):
 
 def _delete_form_and_respond(form_id, user_id, response_url):
     form = SlackForm.objects(id=form_id).first()
+    if not form:
+        response = slack_blocks.text_response("Couldn't delete form because it does not exist")
+        requests.post(response_url, json.dumps(response))
+        return
     for schedule in SlackFormSchedule.objects(form_id=str(form.id)):
         for event in ScheduledEvent.objects(schedule=schedule):
             if event.slack_message_id:

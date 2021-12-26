@@ -88,7 +88,7 @@ class SlackFormSchedule(Document):
     def get_events_to_schedule(self, days):
         events = []
         for execution_time_utc in self.get_next_times(days):
-            existing = ScheduledEvent.objects(schedule=self, execution_time_utc=execution_time_utc)
+            existing = ScheduledEvent.objects(schedule=self, execution_time_utc=execution_time_utc).first()
             if not existing:
                 next_event = ScheduledEvent(
                     schedule=self,
@@ -96,6 +96,8 @@ class SlackFormSchedule(Document):
                     status=ScheduledTimeStatus.Pending.value
                 )
                 events.append(next_event)
+            elif not existing.slack_message_id:
+                events.append(existing)
         return events
 
     def schedule_description(self):

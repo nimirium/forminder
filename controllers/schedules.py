@@ -96,7 +96,8 @@ def _delete_schedule_and_respond(schedule_id, user_id, response_url):
     if schedule:
         form = SlackForm.objects(id=schedule.form_id).first()
         for event in ScheduledEvent.objects(schedule=schedule):
-            delete_slack_scheduled_message(schedule.user_id, event.slack_message_id)
+            if event.slack_message_id:
+                delete_slack_scheduled_message(schedule.user_id, event.slack_message_id)
             event.delete()
         schedule.delete()
         result = slack_blocks.text_block_item(f":white_check_mark: Deleted schedule for {form.name} form - "
