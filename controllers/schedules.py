@@ -11,7 +11,7 @@ from dotenv import load_dotenv
 from controllers.shared import list_form_blocks
 from models.form import SlackForm
 from models.schedule import SlackFormSchedule, TimeField, ScheduledEvent
-from util import slack_blocks, slack_scheduler
+from util import slack_blocks, slack_scheduler, slack_actions
 from util.slack_scheduler import delete_slack_scheduled_message
 from util.utils import DAYS_OF_THE_WEEK
 
@@ -33,12 +33,12 @@ def create_form_schedule_command(form_id, user_id, user_name, schedule_form_stat
     days_of_the_week = []
     at_time = None
     for part in schedule_form_state.values():
-        if part.get('form-weekdays'):
-            for selected_option in part['form-weekdays']['selected_options']:
+        if part.get(slack_actions.FORM_WEEKDAYS):
+            for selected_option in part[slack_actions.FORM_WEEKDAYS]['selected_options']:
                 weekday_number = DAYS_OF_THE_WEEK.index(selected_option['value'])
                 days_of_the_week.append(weekday_number)
-        elif part.get('form-time'):
-            at_time = part['form-time']['selected_time']
+        elif part.get(slack_actions.FORM_TIME):
+            at_time = part[slack_actions.FORM_TIME]['selected_time']
     Thread(target=_create_schedule_and_respond,
            kwargs=dict(form_id=form_id, user_id=user_id, user_name=user_name, days_of_the_week=days_of_the_week,
                        at_time=at_time, response_url=response_url)).start()

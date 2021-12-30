@@ -2,6 +2,7 @@ from random import randint
 
 __all__ = ['text_response', 'help_text_block', 'random_skin_tone', 'form_create_help_text', 'text_block_item']
 
+from util import slack_actions
 from util.utils import DAYS_OF_THE_WEEK
 
 
@@ -106,9 +107,10 @@ def button_block(text, value, action_id):
 def reminder_select_block(form_id):
     return {
         "blocks": [
-            checkboxes_block("When would you like to be reminded to fill the form?", DAYS_OF_THE_WEEK, "form-weekdays"),
-            time_picker_block("At", "09:00", "form-time"),
-            button_block(text="Send", value=form_id, action_id="create-form-schedule"),
+            checkboxes_block("When would you like to be reminded to fill the form?", DAYS_OF_THE_WEEK,
+                             slack_actions.FORM_WEEKDAYS),
+            time_picker_block("At", "09:00", slack_actions.FORM_TIME),
+            button_block(text="Send", value=form_id, action_id=slack_actions.CREATE_FORM_SCHEDULE),
         ]
     }
 
@@ -142,7 +144,7 @@ def form_list_item_action_buttons(form_id):
                     "emoji": True
                 },
                 "value": form_id,
-                "action_id": "schedule-form",
+                "action_id": slack_actions.SCHEDULE_FORM,
             },
             {
                 "type": "button",
@@ -152,7 +154,7 @@ def form_list_item_action_buttons(form_id):
                     "emoji": True
                 },
                 "value": form_id,
-                "action_id": "preview-form",
+                "action_id": slack_actions.PREVIEW_FORM,
             },
             {
                 "type": "button",
@@ -162,7 +164,7 @@ def form_list_item_action_buttons(form_id):
                     "emoji": True
                 },
                 "value": form_id,
-                "action_id": "delete-form",
+                "action_id": slack_actions.DELETE_FORM,
             }
         ]
     }
@@ -200,7 +202,7 @@ def form_list_item(form, schedules):
         blocks.append(text_block_item("Scheduled for:"))
         for schedule in schedules:
             text = "- " + schedule.schedule_description()
-            blocks.append(text_and_button(text, "Delete Schedule", str(schedule.id), 'delete-schedule'))
+            blocks.append(text_and_button(text, "Delete Schedule", str(schedule.id), slack_actions.DELETE_SCHEDULE))
     return blocks
 
 

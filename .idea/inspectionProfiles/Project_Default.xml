@@ -1,0 +1,26 @@
+<component name="InspectionProjectProfileManager">
+  <profile version="1.0">
+    <option name="myName" value="Project Default" />
+    <inspection_tool class="JSHint" enabled="true" level="ERROR" enabled_by_default="true" />
+    <inspection_tool class="PyUnresolvedReferencesInspection" enabled="true" level="WARNING" enabled_by_default="true">
+      <option name="ignoredIdentifiers">
+        <list>
+          <option value="djangoserver.overlord.models.device.Device.objects" />
+          <option value="djangoserver.overlord.models.recordedremote.RecordedRemote.objects" />
+          <option value="djangoserver.overlord.models.remoterecognitionsession.RemoteRecognitionSession.objects" />
+          <option value="djangoserver.overlord.models.userdevice.UserDevice.objects" />
+          <option value="djangoserver.overlord.models.recordedremote.RecordedRemote.DoesNotExist" />
+          <option value="djangoserver.overlord.models.deviceconfiggroup.DeviceConfigGroup.objects" />
+          <option value="djangoserver.overlord.models.allowedqrforactivation.AllowedQrForActivation.objects" />
+          <option value="djangoserver.overlord.models.acstatechangerequest.AcStateChangeRequest.objects" />
+          <option value="djangoserver.overlord.models.airqsubscriotion.AirqSubscription.objects" />
+          <option value="djangoserver.overlord.models.userdevice.UserDevice.DoesNotExist" />
+          <option value="djangoserver.overlord.models.user.User.DoesNotExist" />
+          <option value="djangoserver.overlord.models.usergeofence.UserGeofence.objects" />
+          <option value="djangoserver.overlord.models.hardwaresubscription.HardwareSubscription.objects" />
+          <option value="djangoserver.overlord.models.servicesubscription.ServiceSubscription.objects" />
+        </list>
+      </option>
+    </inspection_tool>
+  </profile>
+</component>

@@ -4,7 +4,7 @@ import shlex
 from flask import Flask, request, Response
 
 from controllers import forms, schedules
-from util import slack_blocks
+from util import slack_blocks, slack_actions
 from models.connect import connect_to_mongo
 
 app = Flask(__name__)
@@ -43,19 +43,19 @@ def slack_interactive_endpoint():
     result = None
     for action in payload['actions']:
         action_id = action['action_id']
-        if action_id in ('form-weekdays', 'form-time'):
+        if action_id in (slack_actions.FORM_WEEKDAYS, slack_actions.FORM_TIME):
             return Response(status=200, mimetype="application/json")
         value = action['value']
-        if action_id == 'delete-form':
+        if action_id == slack_actions.DELETE_FORM:
             result = forms.delete_form_command(value, user_id, response_url)
-        elif action_id == 'preview-form':
+        elif action_id == slack_actions.PREVIEW_FORM:
             result = forms.preview_form_command(value, response_url)
-        elif action_id == 'schedule-form':
+        elif action_id == slack_actions.SCHEDULE_FORM:
             result = schedules.schedule_form_command(value, response_url)
-        elif action_id == 'create-form-schedule':
+        elif action_id == slack_actions.CREATE_FORM_SCHEDULE:
             schedule_form_state = payload['state']['values']
             result = schedules.create_form_schedule_command(value, user_id, user_name, schedule_form_state, response_url)
-        elif action_id == 'delete-schedule':
+        elif action_id == slack_actions.DELETE_SCHEDULE:
             result = schedules.delete_schedule_command(value, user_id, response_url)
     if result:
         return Response(response=json.dumps(result), status=200, mimetype="application/json")

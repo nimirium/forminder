@@ -1,0 +1,7 @@
+DELETE_FORM = 'delete-form'
+PREVIEW_FORM = 'preview-form'
+SCHEDULE_FORM = 'schedule-form'
+CREATE_FORM_SCHEDULE = 'create-form-schedule'
+DELETE_SCHEDULE = 'delete-schedule'
+FORM_WEEKDAYS = 'form-weekdays'
+FORM_TIME = 'form-time'
