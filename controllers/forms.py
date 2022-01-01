@@ -7,7 +7,7 @@ import requests as requests
 
 from controllers.shared import list_form_blocks
 from models.schedule import ScheduledEvent, SlackFormSchedule
-from util import slack_blocks
+from util import slack_blocks, slack_actions
 from models.form import SlackForm, SlackFormField
 from util.slack_scheduler import delete_slack_scheduled_message
 
@@ -93,16 +93,15 @@ def _delete_form_and_respond(form_id, user_id, response_url):
     requests.post(response_url, json.dumps(response))
 
 
-def preview_form_command(form_id, response_url):
-    Thread(target=_send_preview_form_response, kwargs=dict(form_id=form_id, response_url=response_url)).start()
+def fill_form_now_command(form_id, response_url):
+    Thread(target=_send_fill_now_response, kwargs=dict(form_id=form_id, response_url=response_url)).start()
     return
 
 
-def _send_preview_form_response(form_id, response_url):
+def _send_fill_now_response(form_id, response_url):
     form = SlackForm.objects(id=form_id).first()
-    blocks = [slack_blocks.text_block_item(":eyes: Start of preview :eyes:")]
-    for block in slack_blocks.form_slack_blocks(form, action_id='preview-submit-form'):
+    blocks = []
+    for block in slack_blocks.form_slack_blocks(form, action_id=slack_actions.SUBMIT_FORM_NOW):
         blocks.append(block)
-    blocks.append(slack_blocks.text_block_item(":eyes: End of preview :eyes:"))
     result = dict(blocks=blocks)
     requests.post(response_url, json.dumps(result))

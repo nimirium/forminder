@@ -140,21 +140,31 @@ def form_list_item_action_buttons(form_id):
                 "type": "button",
                 "text": {
                     "type": "plain_text",
-                    "text": "Schedule",
+                    "text": "Fill now",
                     "emoji": True
                 },
                 "value": form_id,
-                "action_id": slack_actions.SCHEDULE_FORM,
+                "action_id": slack_actions.FILL_FORM_NOW,
             },
             {
                 "type": "button",
                 "text": {
                     "type": "plain_text",
-                    "text": "Preview",
+                    "text": "View submissions",
                     "emoji": True
                 },
                 "value": form_id,
-                "action_id": slack_actions.PREVIEW_FORM,
+                "action_id": slack_actions.VIEW_FORM_SUBMISSIONS,
+            },
+            {
+                "type": "button",
+                "text": {
+                    "type": "plain_text",
+                    "text": "Schedule",
+                    "emoji": True
+                },
+                "value": form_id,
+                "action_id": slack_actions.SCHEDULE_FORM,
             },
             {
                 "type": "button",
@@ -206,13 +216,13 @@ def form_list_item(form, schedules):
     return blocks
 
 
-def text_input_block(title, multiline=False):
+def text_input_block(title, action, multiline=False):
     return {
         "type": "input",
         "element": {
             "type": "plain_text_input",
             "multiline": multiline,
-            "action_id": "plain_text_input-action"
+            "action_id": action,
         },
         "label": {
             "type": "plain_text",
@@ -228,8 +238,8 @@ def form_slack_blocks(form, action_id):
     ]
     for field in form.fields:
         if field.type == 'text':
-            blocks.append(text_input_block(field.title, multiline=False))
+            blocks.append(text_input_block(field.title, action=str(field.id), multiline=False))
         elif field.type == 'text-multiline':
-            blocks.append(text_input_block(field.title, multiline=True))
+            blocks.append(text_input_block(field.title, action=str(field.id), multiline=True))
     blocks.append(button_block(text="Submit", value=str(form.id), action_id=action_id))
     return blocks

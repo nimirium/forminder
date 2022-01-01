@@ -3,7 +3,7 @@ import shlex
 
 from flask import Flask, request, Response
 
-from controllers import forms, schedules
+from controllers import forms, schedules, submissions
 from util import slack_blocks, slack_actions
 from models.connect import connect_to_mongo
 
@@ -48,8 +48,8 @@ def slack_interactive_endpoint():
         value = action['value']
         if action_id == slack_actions.DELETE_FORM:
             result = forms.delete_form_command(value, user_id, response_url)
-        elif action_id == slack_actions.PREVIEW_FORM:
-            result = forms.preview_form_command(value, response_url)
+        elif action_id == slack_actions.FILL_FORM_NOW:
+            result = forms.fill_form_now_command(value, response_url)
         elif action_id == slack_actions.SCHEDULE_FORM:
             result = schedules.schedule_form_command(value, response_url)
         elif action_id == slack_actions.CREATE_FORM_SCHEDULE:
@@ -57,6 +57,12 @@ def slack_interactive_endpoint():
             result = schedules.create_form_schedule_command(value, user_id, user_name, schedule_form_state, response_url)
         elif action_id == slack_actions.DELETE_SCHEDULE:
             result = schedules.delete_schedule_command(value, user_id, response_url)
+        elif action_id == slack_actions.SUBMIT_FORM_SCHEDULED:
+            result = submissions.submit_scheduled_form(value, user_id, payload, response_url)
+        elif action_id == slack_actions.SUBMIT_FORM_NOW:
+            result = submissions.submit_form_now(value, user_id, payload, response_url)
+        elif action_id == slack_actions.VIEW_FORM_SUBMISSIONS:
+            result = submissions.view_submissions(value, user_id, response_url)
     if result:
         return Response(response=json.dumps(result), status=200, mimetype="application/json")
     return Response(status=200, mimetype="application/json")
