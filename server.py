@@ -13,7 +13,6 @@ connect_to_mongo()
 
 @app.route("/slack-webhook", methods=['POST'])
 def slack_webhook():
-    print(f"request.form: {request.form}")
     user_id = request.form['user_id']
     user_name = request.form['user_name']
     response_url = request.form['response_url']
@@ -26,7 +25,6 @@ def slack_webhook():
         result = forms.create_form_command(user_id, user_name, args[2:], response_url)
     elif args[0] == "list" and args[1] == "forms":
         result = forms.list_forms_command(user_id, response_url)
-    print(f"result is {result}")
     if result:
         return Response(response=json.dumps(result), status=200, mimetype="application/json")
     return Response(status=200, mimetype="application/json")
@@ -34,8 +32,6 @@ def slack_webhook():
 
 @app.route("/slack-interactive-endpoint", methods=['POST'])
 def slack_interactive_endpoint():
-    print(f"request.form.keys(): {request.form.keys()}")
-    print(f"request.form: {request.form}")
     payload = json.loads(request.form['payload'])
     response_url = payload['response_url']
     user_id = payload['user']['id']
