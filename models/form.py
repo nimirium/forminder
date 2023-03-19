@@ -22,13 +22,13 @@ class SlackForm(Document):
     meta = dict(strict=False)
 
 
-class SlackFormSubmissionField(EmbeddedDocument):
+class SubmissionField(EmbeddedDocument):
     title = StringField()
     value = StringField()
 
 
-class SlackFormSubmission(Document):
+class Submission(Document):
     form_id = StringField()
     user_id = StringField()
-    fields = ListField(EmbeddedDocumentField(SlackFormSubmissionField))
+    fields = ListField(EmbeddedDocumentField(SubmissionField))
     created_at = DateTimeField(default=datetime.datetime.now)

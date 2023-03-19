@@ -116,15 +116,15 @@ def reminder_select_block(form_id):
 
 
 help_text = f""":information_desk_person:{random_skin_tone()} Usage:
-:one: /ask-remind create form
-:two: /ask-remind list forms"""
+:one: /forminder create form
+:two: /forminder list forms"""
 
 help_text_block = {
     "blocks": [text_block_item(help_text)]
 }
 
 form_create_help_text = f""":information_desk_person:{random_skin_tone()} create-form usage:
-/ask-remind create form --form-name=“My Form” --text=“Name” --text=“Age” --text-multiline=“Hobbies”
+/forminder create form --form-name=“My Form” --text=“Name” --text=“Age” --text-multiline=“Hobbies”
 --form-name is the name of the form
 --text adds a text field to the form
 --text-multiline adds a multi-line text field to the form

@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 from slack_sdk import WebClient
 
 from models.connect import connect_to_mongo
-from models.schedule import SlackFormSchedule, ScheduledEvent
+from models.schedule import FormSchedule, ScheduledEvent
 from util import slack_scheduler
 
 logging.getLogger().setLevel(logging.INFO)
@@ -19,7 +19,7 @@ client = WebClient(token=os.environ.get("SLACK_BOT_TOKEN"))
 def schedule_future_messages():
     st = time.perf_counter()
     logging.info("Scheduling slack messages...")
-    for schedule in SlackFormSchedule.objects.all():
+    for schedule in FormSchedule.objects.all():
         for event in schedule.get_events_to_schedule(days=7):
             slack_message_id = slack_scheduler.schedule_slack_message(schedule, event)
             event.slack_message_id = slack_message_id

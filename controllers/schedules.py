@@ -10,7 +10,7 @@ from dotenv import load_dotenv
 
 from controllers.shared import list_form_blocks
 from models.form import SlackForm
-from models.schedule import SlackFormSchedule, TimeField, ScheduledEvent
+from models.schedule import FormSchedule, TimeField, ScheduledEvent
 from util import slack_blocks, slack_scheduler, slack_actions
 from util.slack_scheduler import delete_slack_scheduled_message
 from util.utils import DAYS_OF_THE_WEEK
@@ -56,13 +56,13 @@ def _create_schedule_and_respond(form_id, user_id, user_name, days_of_the_week, 
     hour = int(at_time.split(':')[0])
     minute = int(at_time.split(':')[1])
     time_local = TimeField(hour=hour, minute=minute)
-    existing = SlackFormSchedule.objects(user_id=user_id, form_id=form_id, days_of_the_week=days_of_the_week,
-                                         timezone=tz_name, time_local=time_local)
+    existing = FormSchedule.objects(user_id=user_id, form_id=form_id, days_of_the_week=days_of_the_week,
+                                    timezone=tz_name, time_local=time_local)
     if existing.count() > 0:
         result = slack_blocks.text_response(":warning: This schedule already exists! :warning:")
         requests.post(response_url, json.dumps(result))
         return
-    schedule = SlackFormSchedule(
+    schedule = FormSchedule(
         user_id=user_id,
         user_name=user_name,
         form_id=form_id,
@@ -92,7 +92,7 @@ def delete_schedule_command(schedule_id, user_id, response_url):
 
 
 def _delete_schedule_and_respond(schedule_id, user_id, response_url):
-    schedule = SlackFormSchedule.objects(id=schedule_id).first()
+    schedule = FormSchedule.objects(id=schedule_id).first()
     if schedule:
         form = SlackForm.objects(id=schedule.form_id).first()
         for event in ScheduledEvent.objects(schedule=schedule):

@@ -27,7 +27,7 @@ You'll get an https address like `https://XXXXXXXXXXXXXXX.ngrok.io`.
 Use it instead of YOUR_DOMAIN in the next step.
 
 ### configure slack app
-1. Create a slash command which points `/ask-remind` to `YOUR_DOMAIN/slack-webhook`
+1. Create a slash command which points `/forminder` to `YOUR_DOMAIN/slack-webhook`
 2. In "Interactivity & Shortcuts", set interactivity request url to `YOUR_DOMAIN/slack-interactive-endpoint`
 3. Create a bot user OAuth token in slack, and put it in an `.env` file
 ```shell

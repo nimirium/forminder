@@ -6,7 +6,7 @@ from typing import List
 import requests as requests
 
 from controllers.shared import list_form_blocks
-from models.schedule import ScheduledEvent, SlackFormSchedule
+from models.schedule import ScheduledEvent, FormSchedule
 from util import slack_blocks, slack_actions
 from models.form import SlackForm, SlackFormField
 from util.slack_scheduler import delete_slack_scheduled_message
@@ -52,7 +52,7 @@ def _create_form__save_and_respond(form_kwargs, response_url):
     form = SlackForm(**form_kwargs)
     form.save()
     response = slack_blocks.text_response(f""":white_check_mark: Form ’{form.name}' was created
-:information_source: Use “/ask-remind list forms” to see your forms
+:information_source: Use “/forminder list forms” to see your forms
 """)
     requests.post(response_url, json.dumps(response))
 
@@ -80,7 +80,7 @@ def _delete_form_and_respond(form_id, user_id, response_url):
         response = slack_blocks.text_response("Couldn't delete form because it does not exist")
         requests.post(response_url, json.dumps(response))
         return
-    for schedule in SlackFormSchedule.objects(form_id=str(form.id)):
+    for schedule in FormSchedule.objects(form_id=str(form.id)):
         for event in ScheduledEvent.objects(schedule=schedule):
             if event.slack_message_id:
                 delete_slack_scheduled_message(schedule.user_id, event.slack_message_id)

@@ -24,7 +24,7 @@ class TimeField(EmbeddedDocument):
         return f"{str(self.hour).zfill(2)}:{str(self.minute).zfill(2)}"
 
 
-class SlackFormSchedule(Document):
+class FormSchedule(Document):
     user_id = StringField()
     user_name = StringField()
     form_id = StringField()
@@ -106,7 +106,7 @@ class SlackFormSchedule(Document):
 
 
 class ScheduledEvent(Document):
-    schedule = ReferenceField(SlackFormSchedule)
+    schedule = ReferenceField(FormSchedule)
     execution_time_utc = DateTimeField()
     status = StringField()
     slack_message_id = StringField()
