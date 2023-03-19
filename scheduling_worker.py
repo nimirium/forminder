@@ -45,8 +45,14 @@ def clear_scheduled_messages():
 
 
 def run_scheduling_worker():
-    schedule_future_messages()
-    clear_scheduled_messages()
+    while True:
+        st = time.time()
+        schedule_future_messages()
+        clear_scheduled_messages()
+        sleep_time = 60 - (time.time() - st)
+        if sleep_time > 0:
+            logging.info("sleeping for {:.2f} seconds".format(sleep_time))
+            time.sleep(sleep_time)
 
 
 if __name__ == '__main__':

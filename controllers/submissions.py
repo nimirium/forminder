@@ -4,7 +4,7 @@ from threading import Thread
 import requests
 
 from models.form import SlackForm, SlackFormSubmission, SlackFormSubmissionField
-from util import slack_blocks, slack_actions
+from util import slack_blocks
 from util.utils import day_with_suffix
 
 
@@ -17,8 +17,7 @@ def submit_scheduled_form(form_id, user_id, payload, response_url):
         question = input_item['label']['text']
         questions[block_id] = question
     for block_id, form_field in payload['state']['values'].items():
-        val = form_field[slack_actions.FORM_FIELD_SUBMISSION]['value']
-        field_type = form_field[slack_actions.FORM_FIELD_SUBMISSION]['type']
+        val = list(form_field.values())[0]['value']
         title = questions[block_id]
         fields.append(SlackFormSubmissionField(
             title=title,
