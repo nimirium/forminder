@@ -39,7 +39,7 @@ def slack_interactive_endpoint():
     result = None
     for action in payload['actions']:
         action_id = action['action_id']
-        if action_id in (slack_actions.FORM_WEEKDAYS, slack_actions.FORM_TIME):
+        if action_id in (slack_actions.FORM_WEEKDAYS, slack_actions.FORM_TIME) or action['type'] == 'static_select':
             return Response(status=200, mimetype="application/json")
         value = action['value']
         if action_id == slack_actions.DELETE_FORM:

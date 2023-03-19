@@ -64,7 +64,10 @@ def submit_form_now(form_id, user_id, payload, response_url):
     form = SlackForm.objects(id=form_id).first()
     for slack_form in payload['state']['values'].values():
         for field_id, item in slack_form.items():
-            val = item['value']
+            if item['type'] == 'static_select':
+                val = item['selected_option']['value']
+            else:
+                val = item['value']
             field = [x for x in form.fields if str(x.id) == field_id][0]
             fields.append(SubmissionField(
                 title=field.title,

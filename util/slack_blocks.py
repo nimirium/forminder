@@ -124,10 +124,11 @@ help_text_block = {
 }
 
 form_create_help_text = f""":information_desk_person:{random_skin_tone()} create-form usage:
-/forminder create form --form-name=“My Form” --text=“Name” --text=“Age” --text-multiline=“Hobbies”
---form-name is the name of the form
---text adds a text field to the form
---text-multiline adds a multi-line text field to the form
+`/forminder create form --form-name="My Form" --text-field="First name" --text-field="Last name" --multiline-field="Hobbies" --select-field="Color:blue,red,yellow" --public`
+--form-name - the name of the form
+--text-field - adds a text field to the form
+--multiline-field - adds a multi-line text field to the form
+--select-field - adds a select field to the form
 --public use this to make your form public, otherwise it will only be available to you
 """
 
@@ -232,6 +233,35 @@ def text_input_block(title, action, multiline=False):
     }
 
 
+def select_block(title, options, action):
+    return {
+        "type": "section",
+        "block_id": f"section-{action}",
+        "text": {
+            "type": "mrkdwn",
+            "text": title
+        },
+        "accessory": {
+            "action_id": action,
+            "type": "static_select",
+            "placeholder": {
+                "type": "plain_text",
+                "text": "Select an item"
+            },
+            "options": [
+                {
+                    "text": {
+                        "type": "plain_text",
+                        "text": option
+                    },
+                    "value": option
+                } for option in options
+            ]
+        }
+    }
+
+
+
 def form_slack_blocks(form, action_id):
     blocks = [
         text_block_item(form.name),
@@ -241,5 +271,7 @@ def form_slack_blocks(form, action_id):
             blocks.append(text_input_block(field.title, action=str(field.id), multiline=False))
         elif field.type == 'text-multiline':
             blocks.append(text_input_block(field.title, action=str(field.id), multiline=True))
+        elif field.type == 'select':
+            blocks.append(select_block(field.title, field.options, action=str(field.id)))
     blocks.append(button_block(text="Submit", value=str(form.id), action_id=action_id))
     return blocks

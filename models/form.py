@@ -10,6 +10,7 @@ class SlackFormField(EmbeddedDocument):
     id = StringField(required=True, default=str_object_id)
     type = StringField()
     title = StringField()
+    options = ListField(StringField())
     meta = dict(strict=False)
 
 

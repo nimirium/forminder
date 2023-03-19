@@ -13,9 +13,10 @@ from util.slack_scheduler import delete_slack_scheduled_message
 
 create_form_parser = argparse.ArgumentParser()
 create_form_parser.add_argument("--form-name")
-create_form_parser.add_argument("--text", action='append', nargs='?', default=[])
-create_form_parser.add_argument("--text-multiline", action='append', nargs='?', default=[])
-create_form_parser.add_argument("--public", default=False)
+create_form_parser.add_argument("--text-field", action='append', nargs='?', default=[])
+create_form_parser.add_argument("--multiline-field", action='append', nargs='?', default=[])
+create_form_parser.add_argument("--select-field", action='append', nargs='?', default=[])
+create_form_parser.add_argument("--public", action='store_true', default=False)
 
 
 def create_form_command(user_id, user_name, command_args: List[str], response_url):
@@ -24,14 +25,20 @@ def create_form_command(user_id, user_name, command_args: List[str], response_ur
     params = create_form_parser.parse_args(command_args)
     if not params.form_name:
         return slack_blocks.text_response(slack_blocks.form_create_help_text)
-    if not params.text and not params.text_multiline:
+    if not params.text_field and not params.multiline_field and not params.select_field:
         return slack_blocks.text_response(slack_blocks.form_create_help_text)
 
     fields = []
-    for field_name in params.text:
+    for field_name in params.text_field:
         fields.append(SlackFormField(type='text', title=field_name))
-    for field_name in params.text_multiline:
+    for field_name in params.multiline_field:
         fields.append(SlackFormField(type='text-multiline', title=field_name))
+    for field_name in params.select_field:
+        if ':' not in field_name:
+            return slack_blocks.text_response(slack_blocks.form_create_help_text)
+        title = field_name.split(':')[0].strip()
+        options = [x.strip() for x in field_name.split(':')[1].split(',')]
+        fields.append(SlackFormField(type='select', title=title, options=options))
     form_kwargs = dict(
         user_id=user_id,
         user_name=user_name,
