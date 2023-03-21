@@ -36,7 +36,7 @@ def slack_webhook():
     if len(args) < 1:
         result = slack_blocks.help_text_block
     elif args[0] == "create":
-        result = forms.create_form_command(user_id, user_name, args[2:], response_url)
+        result = forms.create_form_command(user_id, user_name, args[1:], response_url)
     elif args[0] == "list":
         result = forms.list_forms_command(user_id, response_url)
     if result:
@@ -54,7 +54,7 @@ def slack_interactive_endpoint():
     result = None
     for action in payload['actions']:
         action_id = action['action_id']
-        if action_id in (slack_actions.FORM_WEEKDAYS, slack_actions.FORM_TIME) or action['type'] == 'static_select':
+        if action_id in (slack_actions.FORM_WEEKDAYS, slack_actions.FORM_TIME) or action.get('type') == 'static_select':
             return Response(status=200, mimetype="application/json")
         value = action['value']
         if action_id == slack_actions.DELETE_FORM:
