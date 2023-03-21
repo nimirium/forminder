@@ -107,6 +107,7 @@ def button_block(text, value, action_id):
 def reminder_select_block(form_id):
     return {
         "blocks": [
+            # select_block("PM in a", ["Slack channel", "Personal message"], action=slack_actions.SEND_SCHEDULE_TO),
             checkboxes_block("When would you like to be reminded to fill the form?", DAYS_OF_THE_WEEK,
                              slack_actions.FORM_WEEKDAYS),
             time_picker_block("At", "09:00", slack_actions.FORM_TIME),
@@ -116,20 +117,20 @@ def reminder_select_block(form_id):
 
 
 help_text = f""":information_desk_person:{random_skin_tone()} Usage:
-:one: /forminder create form
-:two: /forminder list forms"""
+:one: /forminder create
+:two: /forminder list"""
 
 help_text_block = {
     "blocks": [text_block_item(help_text)]
 }
 
 form_create_help_text = f""":information_desk_person:{random_skin_tone()} create-form usage:
-`/forminder create form --form-name="My Form" --text-field="First name" --text-field="Last name" --multiline-field="Hobbies" --select-field="Color:blue,red,yellow" --public`
---form-name - the name of the form
---text-field - adds a text field to the form
---multiline-field - adds a multi-line text field to the form
---select-field - adds a select field to the form
---public use this to make your form public, otherwise it will only be available to you
+```/forminder create --form-name="My Form" --text-field="First name" --text-field="Last name" --multiline-field="Hobbies" --select-field="Color:blue,red,yellow" --public```
+`--form-name` - Required, the name of the form
+`--text-field` - Optional, adds a text field to the form
+`--multiline-field` - Optional, adds a multi-line text field to the form
+`--select-field` - Optional, adds a select field to the form
+`--public` Optional, use this to make your form public, otherwise it will only be available to you
 """
 
 
@@ -257,6 +258,25 @@ def select_block(title, options, action):
                     "value": option
                 } for option in options
             ]
+        }
+    }
+
+
+def select_channel_block():
+    return {
+        "type": "section",
+        "block_id": "section678",
+        "text": {
+            "type": "mrkdwn",
+            "text": "Pick channels from the list"
+        },
+        "accessory": {
+            "action_id": "text1234",
+            "type": "multi_channels_select",
+            "placeholder": {
+                "type": "plain_text",
+                "text": "Select channels"
+            }
         }
     }
 

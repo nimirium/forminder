@@ -47,12 +47,12 @@ def create_form_schedule_command(form_id, user_id, user_name, schedule_form_stat
 
 def _create_schedule_and_respond(form_id, user_id, user_name, days_of_the_week, at_time, response_url):
     try:
-        result = client.users_info(user=user_id)
-        logging.info(result)
+        users_info = client.users_info(user=user_id)
+        logging.info(users_info)
     except SlackApiError as e:
         logging.error("Error fetching conversations: {}".format(e))
         return slack_blocks.text_response(":x: Failed to create schedule :x:")
-    tz_name = result.data['user']['tz']
+    tz_name = users_info.data['user']['tz']
     hour = int(at_time.split(':')[0])
     minute = int(at_time.split(':')[1])
     time_local = TimeField(hour=hour, minute=minute)

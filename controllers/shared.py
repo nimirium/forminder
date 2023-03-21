@@ -8,7 +8,7 @@ from util.slack_blocks import random_skin_tone
 
 def _no_forms_text():
     return f""":information_desk_person:{random_skin_tone()} There are no forms yet
-:information_source: use “/forminder create form” to create one"""
+:information_source: use “/forminder create” to create one"""
 
 
 def list_form_blocks(user_id):

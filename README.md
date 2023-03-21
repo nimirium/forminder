@@ -27,11 +27,13 @@ You'll get an https address like `https://XXXXXXXXXXXXXXX.ngrok.io`.
 Use it instead of YOUR_DOMAIN in the next step.
 
 ### configure slack app
-1. Create a slash command which points `/forminder` to `YOUR_DOMAIN/slack-webhook`
-2. In "Interactivity & Shortcuts", set interactivity request url to `YOUR_DOMAIN/slack-interactive-endpoint`
+1. Create a slash command which points `/forminder` to `YOUR_DOMAIN/slash-command`
+2. In "Interactivity & Shortcuts", set interactivity request url to `YOUR_DOMAIN/interactive`
 3. Create a bot user OAuth token in slack, and put it in an `.env` file
+4. Add your signing secret (from the Basic Information tab) to the `.env` file
 ```shell
 SLACK_BOT_TOKEN=xoxb-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+SIGNING_SECRET=XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 ```
 
 ### Run the scheduler

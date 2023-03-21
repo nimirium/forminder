@@ -1,17 +1,31 @@
 import json
+import os
 import shlex
 
 from flask import Flask, request, Response
+from slack_sdk.signature import SignatureVerifier
 
 from controllers import forms, schedules, submissions
-from util import slack_blocks, slack_actions
 from models.connect import connect_to_mongo
+from util import slack_blocks, slack_actions
 
 app = Flask(__name__)
 connect_to_mongo()
+slack_verifier = SignatureVerifier(os.environ['SIGNING_SECRET'])
 
 
-@app.route("/slack-webhook", methods=['POST'])
+def verify_slack_request(func, *args, **kwargs):
+    def wrapper():
+        if slack_verifier.is_valid_request(request.get_data(), request.headers):
+            return func(*args, **kwargs)
+        return Response(status=401)
+
+    wrapper.__name__ = func.__name__
+
+    return wrapper
+
+@app.route("/slash-command", methods=['POST'])
+@verify_slack_request
 def slack_webhook():
     user_id = request.form['user_id']
     user_name = request.form['user_name']
@@ -19,18 +33,19 @@ def slack_webhook():
     command_text = (request.form['text'] or '').replace("”", '"').replace("“", '"')
     args = shlex.split(command_text)
     result = None
-    if len(args) < 2:
+    if len(args) < 1:
         result = slack_blocks.help_text_block
-    elif args[0] == "create" and args[1] == "form":
+    elif args[0] == "create":
         result = forms.create_form_command(user_id, user_name, args[2:], response_url)
-    elif args[0] == "list" and args[1] == "forms":
+    elif args[0] == "list":
         result = forms.list_forms_command(user_id, response_url)
     if result:
         return Response(response=json.dumps(result), status=200, mimetype="application/json")
     return Response(status=200, mimetype="application/json")
 
 
-@app.route("/slack-interactive-endpoint", methods=['POST'])
+@app.route("/interactive", methods=['POST'])
+@verify_slack_request
 def slack_interactive_endpoint():
     payload = json.loads(request.form['payload'])
     response_url = payload['response_url']
