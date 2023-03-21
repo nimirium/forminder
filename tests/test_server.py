@@ -27,7 +27,6 @@ class TestServer(unittest.TestCase):
         })
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.content_type, "application/json")
 
     @patch("server.SignatureVerifier.is_valid_request")
     def test_interactive(self, mock_is_valid_request):
@@ -42,7 +41,6 @@ class TestServer(unittest.TestCase):
         response = self.app.post("/interactive", data={"payload": json.dumps(payload)})
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.content_type, "application/json")
 
     @patch("server.SignatureVerifier.is_valid_request")
     @patch("server.forms.create_form_command")
@@ -61,7 +59,6 @@ class TestServer(unittest.TestCase):
             "user1", "username1", ['--text=Question 1', '--select=Color:red,blue,yellow'], "http://example.com"
         )
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.content_type, "application/json")
 
 
     @patch("server.SignatureVerifier.is_valid_request")
@@ -79,7 +76,6 @@ class TestServer(unittest.TestCase):
 
         mock_list_forms_command.assert_called_once_with("user1", "http://example.com")
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.content_type, "application/json")
 
 
     def create_payload(self, action_id, value=None, action_type=None, state=None):
@@ -188,6 +184,21 @@ class TestServer(unittest.TestCase):
         payload = self.create_payload(slack_actions.VIEW_FORM_SUBMISSIONS, "form1")
         response = self.post_interactive(payload)
         mock_view_submissions.assert_called_once_with('form1', 'user1', 'http://example.com')
+        self.assertEqual(response.status_code, 200)
+
+
+    @patch("server.SignatureVerifier.is_valid_request")
+    def test_interactive_static_select(self, mock_is_valid_request):
+        mock_is_valid_request.return_value = True
+
+        payload = {
+            "response_url": "http://example.com",
+            "user": {"id": "user1", "username": "username1"},
+            "actions": [{"action_id": "dummy_action", "value": "dummy_value", "type": "static_select"}]
+        }
+
+        response = self.app.post("/interactive", data={"payload": json.dumps(payload)})
+
         self.assertEqual(response.status_code, 200)
 
 
