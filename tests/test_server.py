@@ -1,11 +1,15 @@
 import json
+import os
 import unittest
 from unittest.mock import patch
 
 from flask.testing import FlaskClient
 
 from server import app
-from util import slack_actions
+from src import slack_actions
+
+
+os.environ['MONGO_DB_NAME'] = 'test'
 
 
 class TestServer(unittest.TestCase):

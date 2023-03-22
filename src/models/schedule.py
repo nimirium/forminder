@@ -6,7 +6,7 @@ import pytz as pytz
 from mongoengine import Document, StringField, ListField, ReferenceField, DateTimeField, EmbeddedDocument, \
     EmbeddedDocumentField, IntField
 
-from util.utils import DAYS_OF_THE_WEEK
+from src.utils import DAYS_OF_THE_WEEK
 
 
 class ScheduledTimeStatus(Enum):

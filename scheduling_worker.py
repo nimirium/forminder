@@ -6,9 +6,9 @@ import time
 from dotenv import load_dotenv
 from slack_sdk import WebClient
 
-from models.connect import connect_to_mongo
-from models.schedule import FormSchedule, ScheduledEvent
-from util import slack_scheduler
+from src.models.connect import connect_to_mongo
+from src.models.schedule import FormSchedule, ScheduledEvent
+from src import slack_scheduler
 
 logging.getLogger().setLevel(logging.INFO)
 

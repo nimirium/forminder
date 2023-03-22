@@ -5,9 +5,8 @@ import shlex
 from flask import Flask, request, Response
 from slack_sdk.signature import SignatureVerifier
 
-from controllers import forms, schedules, submissions
-from models.connect import connect_to_mongo
-from util import slack_blocks, slack_actions
+from src import submissions, forms, schedules, slack_actions, slack_ui_blocks
+from src.models.connect import connect_to_mongo
 
 app = Flask(__name__)
 connect_to_mongo()
@@ -34,7 +33,7 @@ def slack_webhook():
     args = shlex.split(command_text)
     result = None
     if len(args) < 1:
-        result = slack_blocks.help_text_block
+        result = slack_ui_blocks.help_text_block
     elif args[0] == "create":
         result = forms.create_form_command(user_id, user_name, args[1:], response_url)
     elif args[0] == "list":

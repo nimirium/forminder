@@ -3,9 +3,9 @@ from threading import Thread
 
 import requests
 
-from models.form import SlackForm, Submission, SubmissionField
-from util import slack_blocks
-from util.utils import day_with_suffix
+from src import slack_ui_blocks
+from src.models.form import SlackForm, Submission, SubmissionField
+from src.utils import day_with_suffix
 
 
 def submit_scheduled_form(form_id, user_id, payload, response_url):
@@ -31,7 +31,7 @@ def submit_scheduled_form(form_id, user_id, payload, response_url):
 
 def _submit_form_and_respond(submission, response_url):
     submission.save()
-    result = slack_blocks.text_response(":herb: The form was submitted :herb:")
+    result = slack_ui_blocks.text_response(":herb: The form was submitted :herb:")
     requests.post(response_url, json.dumps(result))
 
 
@@ -42,8 +42,8 @@ def view_submissions(form_id, user_id, response_url):
 
 def _send_view_submissions_response(form_id, user_id, response_url):
     form = SlackForm.objects(id=form_id).first()
-    blocks = [slack_blocks.text_block_item(f":page_with_curl: {form.name} - submissions"),
-              slack_blocks.divider]
+    blocks = [slack_ui_blocks.text_block_item(f":page_with_curl: {form.name} - submissions"),
+              slack_ui_blocks.divider]
     submissions = Submission.objects(form_id=form_id, user_id=user_id).order_by('-created_at').limit(20)
     count = submissions.count()
     for i, submission in enumerate(submissions):
@@ -52,9 +52,9 @@ def _send_view_submissions_response(form_id, user_id, response_url):
         text = f""":spiral_calendar_pad: {formatted_date}"""
         for field in submission.fields:
             text += f"\nQ: {field.title}\nA: {field.value}"
-        blocks.append(slack_blocks.text_block_item(text))
+        blocks.append(slack_ui_blocks.text_block_item(text))
         if i < count - 1:
-            blocks.append(slack_blocks.divider)
+            blocks.append(slack_ui_blocks.divider)
     response = dict(blocks=blocks)
     requests.post(response_url, json.dumps(response))
 

@@ -4,9 +4,10 @@ import os
 from dotenv import load_dotenv
 from slack_sdk import WebClient
 
-from models.form import SlackForm
-from models.schedule import FormSchedule, ScheduledEvent
-from util import slack_blocks, slack_actions
+from src.models.form import SlackForm
+from src.models.schedule import FormSchedule, ScheduledEvent
+from src import slack_ui_blocks
+from src import slack_actions
 
 load_dotenv()
 client = WebClient(token=os.environ.get("SLACK_BOT_TOKEN"))
@@ -17,7 +18,7 @@ __all__ = ['schedule_slack_message', 'delete_slack_scheduled_message']
 
 def schedule_slack_message(schedule: FormSchedule, event: ScheduledEvent):
     form = SlackForm.objects(id=schedule.form_id).first()
-    blocks = slack_blocks.form_slack_blocks(form, action_id=slack_actions.SUBMIT_FORM_SCHEDULED)
+    blocks = slack_ui_blocks.form_slack_ui_blocks(form, action_id=slack_actions.SUBMIT_FORM_SCHEDULED)
     result = client.chat_scheduleMessage(
         channel=schedule.user_id,
         text="Hi! It's time to fill a form",

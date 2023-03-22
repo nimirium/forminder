@@ -3,7 +3,7 @@ import datetime
 from mongoengine import Document, StringField, EmbeddedDocument, ListField, EmbeddedDocumentField, BooleanField, \
     DateTimeField, EmbeddedDocumentListField
 
-from util.utils import str_object_id
+from src.utils import str_object_id
 
 
 class SlackFormField(EmbeddedDocument):

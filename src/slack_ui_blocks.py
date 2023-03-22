@@ -2,8 +2,8 @@ from random import randint
 
 __all__ = ['text_response', 'help_text_block', 'random_skin_tone', 'form_create_help_text', 'text_block_item']
 
-from util import slack_actions
-from util.utils import DAYS_OF_THE_WEEK
+from src import slack_actions
+from src.utils import DAYS_OF_THE_WEEK
 
 
 def random_skin_tone():
@@ -282,7 +282,7 @@ def select_channel_block():
 
 
 
-def form_slack_blocks(form, action_id):
+def form_slack_ui_blocks(form, action_id):
     blocks = [
         text_block_item(form.name),
     ]
