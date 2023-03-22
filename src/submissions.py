@@ -25,22 +25,22 @@ def submit_scheduled_form(form_id, user_id, payload, response_url):
         ))
     submission = Submission(form_id=form_id, user_id=user_id, fields=fields)
 
-    Thread(target=_submit_form_and_respond, kwargs=dict(submission=submission, response_url=response_url)).start()
+    Thread(target=submit_form_and_respond, kwargs=dict(submission=submission, response_url=response_url)).start()
     return
 
 
-def _submit_form_and_respond(submission, response_url):
+def submit_form_and_respond(submission, response_url):
     submission.save()
     result = slack_ui_blocks.text_response(":herb: The form was submitted :herb:")
     requests.post(response_url, json.dumps(result))
 
 
 def view_submissions(form_id, user_id, response_url):
-    Thread(target=_send_view_submissions_response,
+    Thread(target=send_view_submissions_response,
            kwargs=dict(form_id=form_id, user_id=user_id, response_url=response_url)).start()
 
 
-def _send_view_submissions_response(form_id, user_id, response_url):
+def send_view_submissions_response(form_id, user_id, response_url):
     form = SlackForm.objects(id=form_id).first()
     blocks = [slack_ui_blocks.text_block_item(f":page_with_curl: {form.name} - submissions"),
               slack_ui_blocks.divider]
@@ -74,5 +74,5 @@ def submit_form_now(form_id, user_id, payload, response_url):
                 value=val,
             ))
     submission = Submission(form_id=form_id, user_id=user_id, fields=fields)
-    Thread(target=_submit_form_and_respond,
+    Thread(target=submit_form_and_respond,
            kwargs=dict(submission=submission, response_url=response_url)).start()

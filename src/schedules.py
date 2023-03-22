@@ -21,11 +21,11 @@ client = WebClient(token=os.environ.get("SLACK_BOT_TOKEN"))
 
 
 def schedule_form_command(form_id, response_url):
-    Thread(target=_send_schedule_form_response, kwargs=dict(form_id=form_id, response_url=response_url)).start()
+    Thread(target=send_schedule_form_response, kwargs=dict(form_id=form_id, response_url=response_url)).start()
     return
 
 
-def _send_schedule_form_response(form_id, response_url):
+def send_schedule_form_response(form_id, response_url):
     result = slack_ui_blocks.reminder_select_block(form_id)
     requests.post(response_url, json.dumps(result))
 
@@ -40,13 +40,13 @@ def create_form_schedule_command(form_id, user_id, user_name, schedule_form_stat
                 days_of_the_week.append(weekday_number)
         elif part.get(slack_actions.FORM_TIME):
             at_time = part[slack_actions.FORM_TIME]['selected_time']
-    Thread(target=_create_schedule_and_respond,
+    Thread(target=create_schedule_and_respond,
            kwargs=dict(form_id=form_id, user_id=user_id, user_name=user_name, days_of_the_week=days_of_the_week,
                        at_time=at_time, response_url=response_url)).start()
     return
 
 
-def _create_schedule_and_respond(form_id, user_id, user_name, days_of_the_week, at_time, response_url):
+def create_schedule_and_respond(form_id, user_id, user_name, days_of_the_week, at_time, response_url):
     try:
         users_info = client.users_info(user=user_id)
         logging.info(users_info)
@@ -87,12 +87,12 @@ def _create_schedule_and_respond(form_id, user_id, user_name, days_of_the_week, 
 
 
 def delete_schedule_command(schedule_id, user_id, response_url):
-    Thread(target=_delete_schedule_and_respond,
+    Thread(target=delete_schedule_and_respond,
            kwargs=dict(schedule_id=schedule_id, user_id=user_id, response_url=response_url)).start()
     return
 
 
-def _delete_schedule_and_respond(schedule_id, user_id, response_url):
+def delete_schedule_and_respond(schedule_id, user_id, response_url):
     schedule = FormSchedule.objects(id=schedule_id).first()
     if schedule:
         form = SlackForm.objects(id=schedule.form_id).first()

@@ -12,6 +12,9 @@ def _no_forms_text():
 
 
 def list_form_blocks(user_id):
+    """
+    Slack UI blocks with a list of Forms
+    """
     forms = SlackForm.objects(Q(user_id=user_id) or Q(public=True))
     if forms.count() == 0:
         return [slack_ui_blocks.text_block_item(_no_forms_text())]

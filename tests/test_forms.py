@@ -12,7 +12,7 @@ from src.forms import create_form_command, create_form__save_and_respond, delete
 from src.models.form import SlackForm
 
 
-class TestCreateFormCommand(unittest.TestCase):
+class TestForms(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):

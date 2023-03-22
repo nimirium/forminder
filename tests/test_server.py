@@ -5,6 +5,8 @@ from unittest.mock import patch
 
 from flask.testing import FlaskClient
 
+os.environ['MONGO_DB_NAME'] = 'testdb'
+
 from server import app
 from src import slack_actions
 
