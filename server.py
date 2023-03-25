@@ -2,7 +2,7 @@ import json
 import os
 import shlex
 
-from flask import Flask, request, Response
+from flask import Flask, request, Response, jsonify
 from slack_sdk.signature import SignatureVerifier
 
 from src import submissions, forms, schedules, slack_actions, slack_ui_blocks
@@ -22,6 +22,11 @@ def verify_slack_request(func, *args, **kwargs):
     wrapper.__name__ = func.__name__
 
     return wrapper
+
+
+@app.route('/')
+def index():
+    return jsonify({"Choo Choo": "Welcome to Forminder 🚅"})
 
 @app.route("/slash-command", methods=['POST'])
 @verify_slack_request
