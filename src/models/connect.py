@@ -5,6 +5,6 @@ from mongoengine import connect
 
 
 def connect_to_mongo():
-    dbname = os.environ['MONGO_DB_NAME']
-    logging.info(f"connecting to mongo db: {dbname}")
-    connect('test')
+    db_url = os.environ['MONGO_DB_URL']
+    logging.info(f"connecting to mongo db: mongodb://mongo:********@{db_url.split('@')[1]}")
+    connect(host=db_url)

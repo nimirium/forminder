@@ -3,11 +3,10 @@ from mongoengine import Q
 from src.models.form import SlackForm
 from src.models.schedule import FormSchedule
 from src import slack_ui_blocks
-from src.slack_ui_blocks import random_skin_tone
 
 
 def _no_forms_text():
-    return f""":information_desk_person:{random_skin_tone()} There are no forms yet
+    return f""":information_desk_person: There are no forms yet
 :information_source: use “/forminder create” to create one"""
 
 

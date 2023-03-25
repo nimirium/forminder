@@ -1,14 +1,7 @@
-from random import randint
-
-__all__ = ['text_response', 'help_text_block', 'random_skin_tone', 'form_create_help_text', 'text_block_item']
+__all__ = ['text_response', 'help_text_block', 'form_create_help_text', 'text_block_item']
 
 from src import slack_actions
 from src.utils import DAYS_OF_THE_WEEK
-
-
-def random_skin_tone():
-    tone = randint(1, 6)
-    return '' if tone == 1 else f":skin-tone-{tone}:"
 
 
 divider = {
@@ -116,7 +109,7 @@ def reminder_select_block(form_id):
     }
 
 
-help_text = f""":information_desk_person:{random_skin_tone()} Usage:
+help_text = f""":information_desk_person: Usage:
 :one: /forminder create
 :two: /forminder list"""
 
@@ -124,13 +117,14 @@ help_text_block = {
     "blocks": [text_block_item(help_text)]
 }
 
-form_create_help_text = f""":information_desk_person:{random_skin_tone()} create-form usage:
-```/forminder create --form-name="My Form" --text-field="First name" --text-field="Last name" --multiline-field="Hobbies" --select-field="Color:blue,red,yellow" --public```
-`--form-name` - Required, the name of the form
-`--text-field` - Optional, adds a text field to the form
-`--multiline-field` - Optional, adds a multi-line text field to the form
-`--select-field` - Optional, adds a select field to the form
-`--public` Optional, use this to make your form public, otherwise it will only be available to you
+form_create_help_text = f""":information_desk_person: create-form usage: */forminder create [options]*
+--form-name - Required, the name of the form
+--text-field - Optional, adds a text field to the form
+--multiline-field - Optional, adds a multi-line text field to the form
+--select-field - Optional, adds a select field to the form
+--public Optional, use this to make your form public, otherwise it will only be available to you
+:airplane: *Try this example* :airplane:
+/forminder create --form-name=“My Form” --text-field=“First name” --text-field=“Last name” --multiline-field=“Hobbies” --select-field=“Color:blue,red,yellow” --public
 """
 
 

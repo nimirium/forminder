@@ -55,6 +55,10 @@ def run_scheduling_worker():
             time.sleep(sleep_time)
 
 
-if __name__ == '__main__':
+def main():
     connect_to_mongo()
     run_scheduling_worker()
+
+
+if __name__ == '__main__':
+    main()
