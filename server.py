@@ -2,7 +2,8 @@ import json
 import os
 import shlex
 
-from flask import Flask, request, Response, jsonify
+import requests
+from flask import Flask, request, Response, jsonify, render_template
 from slack_sdk.signature import SignatureVerifier
 
 from src import submissions, forms, schedules, slack_actions, slack_ui_blocks
@@ -11,6 +12,11 @@ from src.models.connect import connect_to_mongo
 app = Flask(__name__)
 connect_to_mongo()
 slack_verifier = SignatureVerifier(os.environ['SIGNING_SECRET'])
+
+SLACK_CLIENT_ID = os.environ.get("SLACK_CLIENT_ID")
+SLACK_CLIENT_SECRET = os.environ.get("SLACK_CLIENT_SECRET")
+SLACK_OAUTH_URL = "https://slack.com/api/oauth.v2.access"
+SLACK_USER_INFO_URL = "https://slack.com/api/users.info"
 
 
 def verify_slack_request(func, *args, **kwargs):
@@ -26,7 +32,33 @@ def verify_slack_request(func, *args, **kwargs):
 
 @app.route('/')
 def index():
-    return jsonify({"Choo Choo": "Welcome to Forminder 🚅"})
+    return render_template('sign-in.html', SLACK_CLIENT_ID=SLACK_CLIENT_ID)
+
+
+@app.route('/oauth2', methods=['GET'])
+def oauth_callback():
+    code = request.args.get('code')
+
+    # Exchange the authorization code for an access token
+    payload = {
+        'client_id': SLACK_CLIENT_ID,
+        'client_secret': SLACK_CLIENT_SECRET,
+        'code': code
+    }
+    response = requests.post(SLACK_OAUTH_URL, data=payload)
+    response_data = response.json()
+
+    # Fetch user information
+    auth_token = response_data['authed_user']['access_token']
+    headers = {'Authorization': f"Bearer {auth_token}"}
+    user_response = requests.get(SLACK_USER_INFO_URL, headers=headers)
+    user_data = user_response.json()
+
+    # Process user data as needed
+    # For example, you can store the user's information in your database
+
+    # Return a JSON response with user data
+    return jsonify(user_data)
 
 @app.route("/slash-command", methods=['POST'])
 @verify_slack_request
