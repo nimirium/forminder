@@ -49,15 +49,14 @@ def oauth_callback():
     response = requests.post(SLACK_OAUTH_URL, data=payload)
     response_data = response.json()
 
-    print(f"oauth response_data: {response_data}")
-
     if 'access_token' not in response_data:
         return jsonify({'error': 'Failed to retrieve access token'}), 500
 
     # Fetch user information
     auth_token = response_data['access_token']
+    user_id = response_data['authed_user']['id']
     headers = {'Authorization': f"Bearer {auth_token}"}
-    user_response = requests.get(SLACK_USER_INFO_URL, headers=headers)
+    user_response = requests.get(SLACK_USER_INFO_URL, headers=headers, params={'user': user_id})
     user_data = user_response.json()
 
     # Process user data as needed
