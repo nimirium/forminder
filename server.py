@@ -8,6 +8,7 @@ from slack_sdk.signature import SignatureVerifier
 
 from src import submissions, forms, schedules, slack_actions, slack_ui_blocks
 from src.models.connect import connect_to_mongo
+from src.models.form import Submission
 
 app = Flask(__name__)
 connect_to_mongo()
@@ -47,6 +48,8 @@ def oauth_callback():
     }
     response = requests.post(SLACK_OAUTH_URL, data=payload)
     response_data = response.json()
+
+    print(f"oauth response_data: {response_data}")
 
     if 'access_token' not in response_data:
         return jsonify({'error': 'Failed to retrieve access token'}), 500
@@ -116,3 +119,15 @@ def slack_interactive_endpoint():
     if result:
         return Response(response=json.dumps(result), status=200, mimetype="application/json")
     return Response(status=200, mimetype="application/json")
+
+
+@app.route('/submissions', methods=['GET'])
+def submissions():
+    form_id = request.args.get('formId')
+    page = int(request.args.get('page', 1))
+    per_page = int(request.args.get('per_page', 10))
+
+    total = Submission.objects(form_id=form_id).count()
+    submissions = Submission.objects(form_id=form_id).skip((page - 1) * per_page).limit(per_page)
+
+    return render_template('submissions.html', submissions=submissions, page=page, per_page=per_page, total=total)
