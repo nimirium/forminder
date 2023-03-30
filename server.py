@@ -11,6 +11,7 @@ from slack_sdk.signature import SignatureVerifier
 from pymongo import MongoClient
 
 from src import submissions, forms, schedules, constants, slack_ui_blocks
+from src.constants import SLASH_COMMAND
 from src.models.connect import connect_to_mongo
 from src.models.form import Submission, SlackForm
 
@@ -54,7 +55,7 @@ def verify_slack_request(func, *args, **kwargs):
 
 def user_logged_in(func, *args, **kwargs):
     def wrapper():
-        if request.args.get('code'):
+        if request.args.get('code') and 'access_token' not in session or 'user_data' not in session:
             # OAuth2: Exchange the authorization code for an access token
             code = request.args.get('code')
             payload = {
@@ -66,7 +67,7 @@ def user_logged_in(func, *args, **kwargs):
             response_data = response.json()
 
             if 'access_token' not in response_data:
-                return jsonify({'error': 'Failed to retrieve access token'}), 500
+                redirect(url_for('index', redirect_url=request.url))
 
             # Fetch user information
             auth_token = response_data['access_token']
@@ -79,7 +80,7 @@ def user_logged_in(func, *args, **kwargs):
                 session['access_token'] = auth_token
                 session['user_data'] = user_data['user']
             else:
-                return jsonify({'error': 'Failed to fetch user data'}), 500
+                redirect(url_for('index', redirect_url=request.url))
 
         if 'access_token' not in session or 'user_data' not in session:
             return redirect(url_for('index', redirect_url=request.url))
@@ -101,7 +102,7 @@ def logout():
     if "access_token" in session:
         session.pop("access_token")
     if "user_data" in session:
-        session.pop("access_token")
+        session.pop("user_data")
     cookie_name = app.config.get("REMEMBER_COOKIE_NAME", SESSION_COOKIE_NAME)
     if cookie_name in request.cookies:
         session["_remember"] = "clear"
@@ -170,7 +171,7 @@ def slack_interactive_endpoint():
 @user_logged_in
 def forms_view():
     forms = SlackForm.objects.filter(team_id=session['user_data']['team_id']).all()
-    return render_template('forms.html', forms=forms)
+    return render_template('forms.html', forms=forms, SLASH_COMMAND=SLASH_COMMAND)
 
 
 

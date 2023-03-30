@@ -24,7 +24,7 @@ class SlackForm(Document):
     meta = dict(strict=False)
 
     def number_of_submissions(self):
-        return Submission.objects.filter(form_id=self.pk).count()
+        return Submission.objects.filter(form_id=str(self.pk)).count()
 
 
 class SubmissionField(EmbeddedDocument):

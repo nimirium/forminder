@@ -23,6 +23,9 @@
         .mygrid-item {
             background-color: #f5f5f5;
         }
+        .bg-greenish {
+            background-color: #ACBFA5;
+        }
     </style>
 
 </head>
@@ -61,12 +64,33 @@
                 {% endfor %}
             </ul>
         </div>
+        {% set number_of_submissions = form.number_of_submissions() %}
         <div class="font-semibold p-1">
-            Submissions: {{ form.number_of_submissions() }}
+            Submissions: {{ number_of_submissions }}
         </div>
+
+        {% if number_of_submissions > 0 %}
+        <button class="bg-greenish rounded-xl p-3 my-2 font-bold shadow-md" style="color: #ffffff">
+            View submissions
+        </button>
+        {% endif %}
     </div>
 
     {% endfor %}
+
+    {% if forms | length == 0 %}
+    <div class="mygrid-item opacity-75 p-7 rounded-xl shadow-md mx-5">
+        <div class="p-1">
+            You don't have any forms.
+        </div>
+        <div class="p-1">
+            Create a form in slack by running:
+        </div>
+        <div class="p-1 font-consolas">
+            /{{ SLASH_COMMAND }} create
+        </div>
+    </div>
+    {% endif %}
 
 </div>
 </body>
