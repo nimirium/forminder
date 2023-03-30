@@ -18,11 +18,12 @@ logging.basicConfig(format='%(asctime)s - %(levelname)s - %(message)s', level=lo
 connect_to_mongo()
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ['SESSION_KEY']  # Replace with your secret key
-app.config['SESSION_TYPE'] = 'filesystem'
+app.config['SESSION_TYPE'] = 'mongodb'
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=1)
 app.config['SESSION_COOKIE_SECURE'] = True
 SESSION_COOKIE_NAME = 'session'
 app.config['SESSION_COOKIE_NAME'] = SESSION_COOKIE_NAME
+app.config['SESSION_MONGODB'] = os.environ['MONGO_DB_URL']
 Session(app)
 slack_verifier = SignatureVerifier(os.environ['SIGNING_SECRET'])
 
