@@ -43,6 +43,33 @@ def verify_slack_request(func, *args, **kwargs):
 
 def user_logged_in(func, *args, **kwargs):
     def wrapper():
+        if request.args.get('code'):
+            # OAuth2: Exchange the authorization code for an access token
+            code = request.args.get('code')
+            payload = {
+                'client_id': SLACK_CLIENT_ID,
+                'client_secret': SLACK_CLIENT_SECRET,
+                'code': code
+            }
+            response = requests.post(SLACK_OAUTH_URL, data=payload)
+            response_data = response.json()
+
+            if 'access_token' not in response_data:
+                return jsonify({'error': 'Failed to retrieve access token'}), 500
+
+            # Fetch user information
+            auth_token = response_data['access_token']
+            user_id = response_data['authed_user']['id']
+            headers = {'Authorization': f"Bearer {auth_token}"}
+            user_response = requests.get(SLACK_USER_INFO_URL, headers=headers, params={'user': user_id})
+            user_data = user_response.json()
+
+            if user_data['ok']:
+                session['access_token'] = auth_token
+                session['user_data'] = user_data['user']
+            else:
+                return jsonify({'error': 'Failed to fetch user data'}), 500
+
         if 'access_token' not in session or 'user_data' not in session:
             return redirect(url_for('index', redirect_url=request.url))
         return func(*args, **kwargs)
@@ -53,44 +80,9 @@ def user_logged_in(func, *args, **kwargs):
 
 @app.route('/')
 def index():
-    return render_template('sign-in.html', SLACK_CLIENT_ID=SLACK_CLIENT_ID, redirect_url=f'{DOMAIN}/oauth2')
+    redirect_path = request.args.get('redirect_path', 'forms')
+    return render_template('sign-in.html', SLACK_CLIENT_ID=SLACK_CLIENT_ID, redirect_url=f'{DOMAIN}/{redirect_path}')
 
-
-@app.route('/oauth2', methods=['GET'])
-def oauth_callback():
-    code = request.args.get('code')
-
-    # Exchange the authorization code for an access token
-    payload = {
-        'client_id': SLACK_CLIENT_ID,
-        'client_secret': SLACK_CLIENT_SECRET,
-        'code': code
-    }
-    response = requests.post(SLACK_OAUTH_URL, data=payload)
-    response_data = response.json()
-
-    if 'access_token' not in response_data:
-        return jsonify({'error': 'Failed to retrieve access token'}), 500
-
-    # Fetch user information
-    auth_token = response_data['access_token']
-    user_id = response_data['authed_user']['id']
-    headers = {'Authorization': f"Bearer {auth_token}"}
-    user_response = requests.get(SLACK_USER_INFO_URL, headers=headers, params={'user': user_id})
-    user_data = user_response.json()
-
-    if user_data['ok']:
-        session['access_token'] = auth_token
-        session['user_data'] = user_data['user']
-        return redirect(url_for('logged_in_page'))
-    else:
-        return jsonify({'error': 'Failed to fetch user data'}), 500
-
-    # Process user data as needed
-    # For example, you can store the user's information in your database
-
-    # Return a JSON response with user data
-    return jsonify(user_data)
 
 @app.route("/slash-command", methods=['POST'])
 @verify_slack_request
