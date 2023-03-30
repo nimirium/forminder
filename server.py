@@ -8,6 +8,7 @@ import requests
 from flask import Flask, request, Response, jsonify, render_template, session, redirect, url_for
 from flask_session import Session
 from slack_sdk.signature import SignatureVerifier
+from pymongo import MongoClient
 
 from src import submissions, forms, schedules, constants, slack_ui_blocks
 from src.models.connect import connect_to_mongo
@@ -23,7 +24,8 @@ app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=1)
 app.config['SESSION_COOKIE_SECURE'] = True
 SESSION_COOKIE_NAME = 'session'
 app.config['SESSION_COOKIE_NAME'] = SESSION_COOKIE_NAME
-app.config['SESSION_MONGODB'] = os.environ['MONGO_DB_URL']
+app.config['SESSION_MONGODB'] = MongoClient(host=os.environ['MONGO_DB_URL'])
+
 Session(app)
 slack_verifier = SignatureVerifier(os.environ['SIGNING_SECRET'])
 
