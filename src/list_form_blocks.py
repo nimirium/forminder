@@ -1,5 +1,6 @@
 from mongoengine import Q
 
+from src.constants import SLASH_COMMAND
 from src.models.form import SlackForm
 from src.models.schedule import FormSchedule
 from src import slack_ui_blocks
@@ -7,7 +8,7 @@ from src import slack_ui_blocks
 
 def _no_forms_text():
     return f""":information_desk_person: There are no forms yet
-:information_source: use “/forminder create” to create one"""
+:information_source: use “/{SLASH_COMMAND} create” to create one"""
 
 
 def list_form_blocks(user_id):

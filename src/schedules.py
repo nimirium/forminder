@@ -12,7 +12,7 @@ from src.list_form_blocks import list_form_blocks
 from src.models.form import SlackForm
 from src.models.schedule import FormSchedule, TimeField, ScheduledEvent
 from src import slack_ui_blocks
-from src import slack_actions, slack_scheduler
+from src import constants, slack_scheduler
 from src.slack_scheduler import delete_slack_scheduled_message
 from src.utils import DAYS_OF_THE_WEEK
 
@@ -26,33 +26,38 @@ def schedule_form_command(form_id, response_url):
 
 
 def send_schedule_form_response(form_id, response_url):
-    result = slack_ui_blocks.reminder_select_block(form_id)
+    channels_response = client.conversations_list()
+    send_to_options = ['me'] + ['#' + x['name'] for x in channels_response['channels']]
+    result = slack_ui_blocks.reminder_select_block(form_id, send_to_options)
     requests.post(response_url, json.dumps(result))
 
 
 def create_form_schedule_command(form_id, user_id, user_name, schedule_form_state, response_url):
     days_of_the_week = []
     at_time = None
+    send_to = None
     for part in schedule_form_state.values():
-        if part.get(slack_actions.FORM_WEEKDAYS):
-            for selected_option in part[slack_actions.FORM_WEEKDAYS]['selected_options']:
+        if part.get(constants.SEND_SCHEDULE_TO):
+            send_to = part[constants.SEND_SCHEDULE_TO]['selected_option']['value']
+        if part.get(constants.FORM_WEEKDAYS):
+            for selected_option in part[constants.FORM_WEEKDAYS]['selected_options']:
                 weekday_number = DAYS_OF_THE_WEEK.index(selected_option['value'])
                 days_of_the_week.append(weekday_number)
-        elif part.get(slack_actions.FORM_TIME):
-            at_time = part[slack_actions.FORM_TIME]['selected_time']
+        elif part.get(constants.FORM_TIME):
+            at_time = part[constants.FORM_TIME]['selected_time']
     Thread(target=create_schedule_and_respond,
            kwargs=dict(form_id=form_id, user_id=user_id, user_name=user_name, days_of_the_week=days_of_the_week,
-                       at_time=at_time, response_url=response_url)).start()
+                       at_time=at_time, send_to=send_to, response_url=response_url)).start()
     return
 
 
-def create_schedule_and_respond(form_id, user_id, user_name, days_of_the_week, at_time, response_url):
+def create_schedule_and_respond(form_id, user_id, user_name, days_of_the_week, at_time, send_to, response_url):
     try:
         users_info = client.users_info(user=user_id)
         logging.info(users_info)
     except SlackApiError as e:
-        logging.error("Error fetching conversations: {}".format(e))
-        return slack_ui_blocks.text_response(":x: Failed to create schedule :x:")
+        logging.exception("Error fetching slack users_info: {}".format(e))
+        return requests.post(response_url, json.dumps(slack_ui_blocks.text_response(":x: Failed to create schedule :x:")))
     tz_name = users_info.data['user']['tz']
     hour = int(at_time.split(':')[0])
     minute = int(at_time.split(':')[1])
@@ -61,13 +66,13 @@ def create_schedule_and_respond(form_id, user_id, user_name, days_of_the_week, a
                                     timezone=tz_name, time_local=time_local)
     if existing.count() > 0:
         result = slack_ui_blocks.text_response(":warning: This schedule already exists! :warning:")
-        requests.post(response_url, json.dumps(result))
-        return
+        return requests.post(response_url, json.dumps(result))
     schedule = FormSchedule(
         user_id=user_id,
         user_name=user_name,
         form_id=form_id,
         days_of_the_week=days_of_the_week,
+        send_to=send_to,
         timezone=tz_name,
         time_local=time_local,
     )
@@ -75,9 +80,13 @@ def create_schedule_and_respond(form_id, user_id, user_name, days_of_the_week, a
     try:
         scheduled_message_id = slack_scheduler.schedule_slack_message(schedule, next_event)
     except Exception as e:
+        logging.exception(f"Error fetching slack users_info: {schedule=}, {next_event=}")
         next_event.delete()
         schedule.delete()
-        return slack_ui_blocks.text_response(":x: Failed to create schedule :x:")
+        if isinstance(e, SlackApiError):
+            return requests.post(response_url, json.dumps(slack_ui_blocks.text_response(":x: Failed to create schedule :x:")))
+        else:
+            return requests.post(response_url, json.dumps(slack_ui_blocks.text_response(":x: Failed to create schedule :x:")))
 
     next_event.scheduled_message_id = scheduled_message_id
     next_event.save()

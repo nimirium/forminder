@@ -1,3 +1,8 @@
+import os
+
+SLASH_COMMAND = os.environ.get('SLASH_COMMAND', 'forminder')
+
+# Slack Actions:
 DELETE_FORM = 'delete-form'
 FILL_FORM_NOW = 'fill-form-now'
 SCHEDULE_FORM = 'schedule-form'

@@ -7,6 +7,7 @@ from unittest.mock import patch, MagicMock
 from mongoengine import connect, disconnect
 
 from src import slack_ui_blocks
+from src.constants import SLASH_COMMAND
 from src.forms import create_form_command, create_form__save_and_respond, delete_form_and_respond, \
     send_fill_now_response
 from src.models.form import SlackForm
@@ -17,6 +18,7 @@ class TestForms(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         # connect to the test database
+        disconnect()
         connect('testdb', host='mongomock://localhost')
         logging.info("connected to mongo: testdb")
 
@@ -99,7 +101,7 @@ class TestForms(unittest.TestCase):
         create_form__save_and_respond(form_kwargs, response_url)
         SlackForm.save.assert_called_once()
         expected_response = slack_ui_blocks.text_response(f""":white_check_mark: Form ’{form_kwargs['name']}' was created
-:information_source: Use “/forminder list forms” to see your forms
+:information_source: Use “/{SLASH_COMMAND} list” to see your forms
 """)
         mock_post.assert_called_once_with(response_url, json.dumps(expected_response))
 

@@ -5,11 +5,12 @@ from typing import List
 
 import requests as requests
 
-from src.list_form_blocks import list_form_blocks
-from src.models.schedule import ScheduledEvent, FormSchedule
+from src import constants
 from src import slack_ui_blocks
-from src import slack_actions
+from src.constants import SLASH_COMMAND
+from src.list_form_blocks import list_form_blocks
 from src.models.form import SlackForm, SlackFormField
+from src.models.schedule import ScheduledEvent, FormSchedule
 from src.slack_scheduler import delete_slack_scheduled_message
 
 create_form_parser = argparse.ArgumentParser()
@@ -20,7 +21,7 @@ create_form_parser.add_argument("--select-field", action='append', nargs='?', de
 create_form_parser.add_argument("--public", action='store_true', default=False)
 
 
-def create_form_command(user_id, user_name, command_args: List[str], response_url):
+def create_form_command(team_id, user_id, user_name, command_args: List[str], response_url):
     if len(command_args) == 0:
         return slack_ui_blocks.text_response(slack_ui_blocks.form_create_help_text)
     params = create_form_parser.parse_args(command_args)
@@ -41,6 +42,7 @@ def create_form_command(user_id, user_name, command_args: List[str], response_ur
         options = [x.strip() for x in field_name.split(':')[1].split(',')]
         fields.append(SlackFormField(type='select', title=title, options=options))
     form_kwargs = dict(
+        team_id=team_id,
         user_id=user_id,
         user_name=user_name,
         name=params.form_name,
@@ -60,7 +62,7 @@ def create_form__save_and_respond(form_kwargs, response_url):
     form = SlackForm(**form_kwargs)
     form.save()
     response = slack_ui_blocks.text_response(f""":white_check_mark: Form ’{form.name}' was created
-:information_source: Use “/forminder list forms” to see your forms
+:information_source: Use “/{SLASH_COMMAND} list” to see your forms
 """)
     requests.post(response_url, json.dumps(response))
 
@@ -109,7 +111,7 @@ def fill_form_now_command(form_id, response_url):
 def send_fill_now_response(form_id, response_url):
     form = SlackForm.objects(id=form_id).first()
     blocks = []
-    for block in slack_ui_blocks.form_slack_ui_blocks(form, action_id=slack_actions.SUBMIT_FORM_NOW):
+    for block in slack_ui_blocks.form_slack_ui_blocks(form, action_id=constants.SUBMIT_FORM_NOW):
         blocks.append(block)
     result = dict(blocks=blocks)
     requests.post(response_url, json.dumps(result))

@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Lobster+Two:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <title>Forminder</title>
+    <style>
+        body {
+            color: #632616;
+            font-family: sans-serif;
+            background-color: #D7CDC3;
+        }
+
+        .forminder {
+            font-family: 'Lobster Two', cursive;
+            font-size: 4rem;
+            font-weight: 700;
+        }
+
+        .mygrid-item {
+            background-color: #f5f5f5;
+        }
+    </style>
+
+</head>
+<body>
+<div class="w-full">
+    <div class="flex justify-between items-center lg:flex-row flex-col w-full">
+        <div class="flex lg:justify-start justify-center lg:w-1/3">
+            <img src="../static/logo_100x100.png" alt="Logo" class="rounded-lg drop-shadow-md m-3">
+            <h1 class="forminder m-3">Forminder</h1>
+        </div>
+        <div class="lg:w-1/3 text-3xl text-center py-5">
+            <h2 class="subtitle">All forms</h2>
+        </div>
+        <div class="lg:w-1/3"></div>
+    </div>
+
+</div>
+
+<div class="flex justify-center place-content-evenly">
+
+    {% for form in forms %}
+
+    <div class="mygrid-item opacity-75 p-7 rounded-xl shadow-md mx-5">
+        <div class="font-semibold text-xl p-1">
+            {{ form.name }}
+        </div>
+        <div class="p-1">
+            Created by {{ form.user_name }}
+        </div>
+        <div class="p-1">
+            <ul class="list-disc pl-5">
+                {% for field in form.fields %}
+                <li>{{ field.title }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+        <div class="font-semibold p-1">
+            Submissions: {{ form.number_of_submissions() }}
+        </div>
+    </div>
+
+    {% endfor %}
+
+</div>
+</body>
+</html>

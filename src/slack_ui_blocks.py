@@ -1,6 +1,7 @@
 __all__ = ['text_response', 'help_text_block', 'form_create_help_text', 'text_block_item']
 
-from src import slack_actions
+from src import constants
+from src.constants import SLASH_COMMAND
 from src.utils import DAYS_OF_THE_WEEK
 
 
@@ -97,34 +98,34 @@ def button_block(text, value, action_id):
     }
 
 
-def reminder_select_block(form_id):
+def reminder_select_block(form_id, send_to_options):
     return {
         "blocks": [
-            # select_block("PM in a", ["Slack channel", "Personal message"], action=slack_actions.SEND_SCHEDULE_TO),
+            select_block("Send a message to: ", send_to_options, action=constants.SEND_SCHEDULE_TO),
             checkboxes_block("When would you like to be reminded to fill the form?", DAYS_OF_THE_WEEK,
-                             slack_actions.FORM_WEEKDAYS),
-            time_picker_block("At", "09:00", slack_actions.FORM_TIME),
-            button_block(text="Send", value=form_id, action_id=slack_actions.CREATE_FORM_SCHEDULE),
+                             constants.FORM_WEEKDAYS),
+            time_picker_block("At", "09:00", constants.FORM_TIME),
+            button_block(text="Send", value=form_id, action_id=constants.CREATE_FORM_SCHEDULE),
         ]
     }
 
 
 help_text = f""":information_desk_person: Usage:
-:one: /forminder create
-:two: /forminder list"""
+:one: /{SLASH_COMMAND} create
+:two: /{SLASH_COMMAND} list"""
 
 help_text_block = {
     "blocks": [text_block_item(help_text)]
 }
 
-form_create_help_text = f""":information_desk_person: create-form usage: */forminder create [options]*
+form_create_help_text = f""":information_desk_person: create-form usage: */{SLASH_COMMAND} create [options]*
 --form-name - Required, the name of the form
 --text-field - Optional, adds a text field to the form
 --multiline-field - Optional, adds a multi-line text field to the form
 --select-field - Optional, adds a select field to the form
 --public Optional, use this to make your form public, otherwise it will only be available to you
 :airplane: *Try this example* :airplane:
-/forminder create --form-name=“My Form” --text-field=“First name” --text-field=“Last name” --multiline-field=“Hobbies” --select-field=“Color:blue,red,yellow” --public
+/{SLASH_COMMAND} create --form-name=“My Form” --text-field=“First name” --text-field=“Last name” --multiline-field=“Hobbies” --select-field=“Color:blue,red,yellow” --public
 """
 
 
@@ -140,7 +141,7 @@ def form_list_item_action_buttons(form_id):
                     "emoji": True
                 },
                 "value": form_id,
-                "action_id": slack_actions.FILL_FORM_NOW,
+                "action_id": constants.FILL_FORM_NOW,
             },
             {
                 "type": "button",
@@ -150,7 +151,7 @@ def form_list_item_action_buttons(form_id):
                     "emoji": True
                 },
                 "value": form_id,
-                "action_id": slack_actions.VIEW_FORM_SUBMISSIONS,
+                "action_id": constants.VIEW_FORM_SUBMISSIONS,
             },
             {
                 "type": "button",
@@ -160,7 +161,7 @@ def form_list_item_action_buttons(form_id):
                     "emoji": True
                 },
                 "value": form_id,
-                "action_id": slack_actions.SCHEDULE_FORM,
+                "action_id": constants.SCHEDULE_FORM,
             },
             {
                 "type": "button",
@@ -170,7 +171,7 @@ def form_list_item_action_buttons(form_id):
                     "emoji": True
                 },
                 "value": form_id,
-                "action_id": slack_actions.DELETE_FORM,
+                "action_id": constants.DELETE_FORM,
             }
         ]
     }
@@ -208,7 +209,7 @@ def form_list_item(form, schedules):
         blocks.append(text_block_item("Scheduled for:"))
         for schedule in schedules:
             text = "- " + schedule.schedule_description()
-            blocks.append(text_and_button(text, "Delete Schedule", str(schedule.id), slack_actions.DELETE_SCHEDULE))
+            blocks.append(text_and_button(text, "Delete Schedule", str(schedule.id), constants.DELETE_SCHEDULE))
     return blocks
 
 

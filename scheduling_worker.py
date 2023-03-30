@@ -11,6 +11,7 @@ from src.models.schedule import FormSchedule, ScheduledEvent
 from src import slack_scheduler
 
 logging.getLogger().setLevel(logging.INFO)
+logging.basicConfig(format='%(asctime)s - %(levelname)s - %(message)s', level=logging.INFO)
 
 load_dotenv()
 client = WebClient(token=os.environ.get("SLACK_BOT_TOKEN"))

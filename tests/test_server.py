@@ -8,7 +8,7 @@ from flask.testing import FlaskClient
 os.environ['MONGO_DB_NAME'] = 'testdb'
 
 from server import app
-from src import slack_actions
+from src import constants
 
 
 os.environ['MONGO_DB_NAME'] = 'test'
@@ -110,7 +110,7 @@ class TestServer(unittest.TestCase):
     def test_interactive_delete_form(self, mock_delete_form_command, mock_is_valid_request):
         mock_is_valid_request.return_value = True
         mock_delete_form_command.return_value = {"text": "Form deleted"}
-        payload = self.create_payload(slack_actions.DELETE_FORM, "form1")
+        payload = self.create_payload(constants.DELETE_FORM, "form1")
         response = self.post_interactive(payload)
         mock_delete_form_command.assert_called_once_with("form1", "user1", "http://example.com")
         self.assertEqual(response.status_code, 200)
@@ -121,7 +121,7 @@ class TestServer(unittest.TestCase):
     def test_interactive_fill_form_now(self, mock_fill_form_now_command, mock_is_valid_request):
         mock_is_valid_request.return_value = True
         mock_fill_form_now_command.return_value = {"text": "Form deleted"}
-        payload = self.create_payload(slack_actions.FILL_FORM_NOW, "form1")
+        payload = self.create_payload(constants.FILL_FORM_NOW, "form1")
         response = self.post_interactive(payload)
         mock_fill_form_now_command.assert_called_once_with("form1", "http://example.com")
         self.assertEqual(response.status_code, 200)
@@ -132,7 +132,7 @@ class TestServer(unittest.TestCase):
     def test_interactive_schedule_form(self, mock_schedule_form_command, mock_is_valid_request):
         mock_is_valid_request.return_value = True
         mock_schedule_form_command.return_value = {"text": "Form deleted"}
-        payload = self.create_payload(slack_actions.SCHEDULE_FORM, "form1")
+        payload = self.create_payload(constants.SCHEDULE_FORM, "form1")
         response = self.post_interactive(payload)
         mock_schedule_form_command.assert_called_once_with("form1", "http://example.com")
         self.assertEqual(response.status_code, 200)
@@ -143,7 +143,7 @@ class TestServer(unittest.TestCase):
     def test_interactive_create_form_schedule(self, mock_create_form_schedule_command, mock_is_valid_request):
         mock_is_valid_request.return_value = True
         mock_create_form_schedule_command.return_value = {"text": "Form deleted"}
-        payload = self.create_payload(slack_actions.CREATE_FORM_SCHEDULE, "form1", state={"state1": "val1"})
+        payload = self.create_payload(constants.CREATE_FORM_SCHEDULE, "form1", state={"state1": "val1"})
         response = self.post_interactive(payload)
         mock_create_form_schedule_command.assert_called_once_with("form1", "user1", "username1", {"state1": "val1"}, "http://example.com")
         self.assertEqual(response.status_code, 200)
@@ -154,7 +154,7 @@ class TestServer(unittest.TestCase):
     def test_interactive_delete_schedule(self, mock_delete_schedule_command, mock_is_valid_request):
         mock_is_valid_request.return_value = True
         mock_delete_schedule_command.return_value = {"text": "Form deleted"}
-        payload = self.create_payload(slack_actions.DELETE_SCHEDULE, "form1")
+        payload = self.create_payload(constants.DELETE_SCHEDULE, "form1")
         response = self.post_interactive(payload)
         mock_delete_schedule_command.assert_called_once_with("form1", "user1", "http://example.com")
         self.assertEqual(response.status_code, 200)
@@ -165,7 +165,7 @@ class TestServer(unittest.TestCase):
     def test_interactive_submit_scheduled_form(self, mock_submit_scheduled_form, mock_is_valid_request):
         mock_is_valid_request.return_value = True
         mock_submit_scheduled_form.return_value = {"text": "Form deleted"}
-        payload = self.create_payload(slack_actions.SUBMIT_FORM_SCHEDULED, "form1")
+        payload = self.create_payload(constants.SUBMIT_FORM_SCHEDULED, "form1")
         response = self.post_interactive(payload)
         mock_submit_scheduled_form.assert_called_once_with('form1', 'user1', payload, 'http://example.com')
         self.assertEqual(response.status_code, 200)
@@ -176,7 +176,7 @@ class TestServer(unittest.TestCase):
     def test_interactive_submit_form_now(self, mock_submit_form_now, mock_is_valid_request):
         mock_is_valid_request.return_value = True
         mock_submit_form_now.return_value = {"text": "Form deleted"}
-        payload = self.create_payload(slack_actions.SUBMIT_FORM_NOW, "form1")
+        payload = self.create_payload(constants.SUBMIT_FORM_NOW, "form1")
         response = self.post_interactive(payload)
         mock_submit_form_now.assert_called_once_with('form1', 'user1', payload, 'http://example.com')
         self.assertEqual(response.status_code, 200)
@@ -187,7 +187,7 @@ class TestServer(unittest.TestCase):
     def test_interactive_view_submissions(self, mock_view_submissions, mock_is_valid_request):
         mock_is_valid_request.return_value = True
         mock_view_submissions.return_value = {"text": "Form deleted"}
-        payload = self.create_payload(slack_actions.VIEW_FORM_SUBMISSIONS, "form1")
+        payload = self.create_payload(constants.VIEW_FORM_SUBMISSIONS, "form1")
         response = self.post_interactive(payload)
         mock_view_submissions.assert_called_once_with('form1', 'user1', 'http://example.com')
         self.assertEqual(response.status_code, 200)

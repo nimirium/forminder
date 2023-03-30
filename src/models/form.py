@@ -15,12 +15,16 @@ class SlackFormField(EmbeddedDocument):
 
 
 class SlackForm(Document):
+    team_id = StringField()
     user_id = StringField()
     user_name = StringField()
     name = StringField()
     fields = EmbeddedDocumentListField(SlackFormField)
     public = BooleanField()
     meta = dict(strict=False)
+
+    def number_of_submissions(self):
+        return Submission.objects.filter(form_id=self.pk).count()
 
 
 class SubmissionField(EmbeddedDocument):

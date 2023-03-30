@@ -29,6 +29,7 @@ class FormSchedule(Document):
     user_name = StringField()
     form_id = StringField()
     days_of_the_week = ListField(IntField())
+    send_to = StringField()  # channel or 'me'
     timezone = StringField()
     time_local = EmbeddedDocumentField(TimeField)
     meta = dict(strict=False)
