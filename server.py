@@ -21,6 +21,8 @@ app.config['SECRET_KEY'] = os.environ['SESSION_KEY']  # Replace with your secret
 app.config['SESSION_TYPE'] = 'filesystem'
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=1)
 app.config['SESSION_COOKIE_SECURE'] = True
+SESSION_COOKIE_NAME = 'session'
+app.config['SESSION_COOKIE_NAME'] = SESSION_COOKIE_NAME
 Session(app)
 slack_verifier = SignatureVerifier(os.environ['SIGNING_SECRET'])
 
@@ -82,6 +84,21 @@ def user_logged_in(func, *args, **kwargs):
 def index():
     redirect_path = request.args.get('redirect_path', 'forms')
     return render_template('sign-in.html', SLACK_CLIENT_ID=SLACK_CLIENT_ID, redirect_url=f'{DOMAIN}/{redirect_path}')
+
+
+@app.route("/logout")
+@user_logged_in
+def logout():
+    if "access_token" in session:
+        session.pop("access_token")
+    if "user_data" in session:
+        session.pop("access_token")
+    cookie_name = app.config.get("REMEMBER_COOKIE_NAME", SESSION_COOKIE_NAME)
+    if cookie_name in request.cookies:
+        session["_remember"] = "clear"
+        if "_remember_seconds" in session:
+            session.pop("_remember_seconds")
+    return redirect('/')
 
 
 @app.route("/slash-command", methods=['POST'])

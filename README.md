@@ -31,7 +31,7 @@ Use it instead of YOUR_DOMAIN in the next step.
 2. In "Interactivity & Shortcuts", set interactivity request url to `YOUR_DOMAIN/interactive`
 3. Create a bot user OAuth token in slack, and put it in an `.env` file
 4. Add your signing secret (from the Basic Information tab) to the `.env` file
-5. Add OAuth redirect url that points to YOUR_DOMAIN 
+5. Add OAuth redirect urla that point to `YOUR_DOMAIN/forms` and `YOUR_DOMAIN/submissions`
 ```shell
 SLACK_BOT_TOKEN=xoxb-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 SIGNING_SECRET=XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
