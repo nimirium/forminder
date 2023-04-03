@@ -3,13 +3,14 @@ import logging
 import os
 import shlex
 from datetime import timedelta
+from urllib.parse import urlparse, parse_qs, urlencode, urlunparse
 
 import requests
-from flask import Flask, request, Response, jsonify, render_template, session, redirect, url_for
-from flask_session import Session
-from slack_sdk.signature import SignatureVerifier
+from flask import Flask, request, Response, render_template, session, redirect, url_for, make_response
 from pymongo import MongoClient
+from slack_sdk.signature import SignatureVerifier
 
+from flask_session import Session
 from src import submissions, forms, schedules, constants, slack_ui_blocks
 from src.constants import SLASH_COMMAND
 from src.models.connect import connect_to_mongo
@@ -53,6 +54,19 @@ def verify_slack_request(func, *args, **kwargs):
     return wrapper
 
 
+def _remove_code_param(url):
+    parsed_url = urlparse(url)
+    query_params = parse_qs(parsed_url.query)
+    query_params.pop('code', None)
+    new_query = urlencode(query_params, doseq=True)
+    new_url = urlunparse(parsed_url._replace(query=new_query))
+    return new_url
+
+
+def user_is_logged_in():
+    return 'access_token' in session and 'user_data' in session
+
+
 def user_logged_in(func, *args, **kwargs):
     def wrapper():
         if request.args.get('code') and 'access_token' not in session or 'user_data' not in session:
@@ -67,7 +81,7 @@ def user_logged_in(func, *args, **kwargs):
             response_data = response.json()
 
             if 'access_token' not in response_data:
-                redirect(url_for('index', redirect_url=request.url))
+                return redirect(url_for('index', redirect_url=request.url))
 
             # Fetch user information
             auth_token = response_data['access_token']
@@ -80,7 +94,7 @@ def user_logged_in(func, *args, **kwargs):
                 session['access_token'] = auth_token
                 session['user_data'] = user_data['user']
             else:
-                redirect(url_for('index', redirect_url=request.url))
+                return redirect(url_for('index', redirect_url=request.url))
 
         if 'access_token' not in session or 'user_data' not in session:
             return redirect(url_for('index', redirect_url=request.url))
@@ -92,6 +106,8 @@ def user_logged_in(func, *args, **kwargs):
 
 @app.route('/')
 def index():
+    if user_is_logged_in():
+        return redirect('/forms')
     redirect_path = request.args.get('redirect_path', 'forms')
     return render_template('sign-in.html', SLACK_CLIENT_ID=SLACK_CLIENT_ID, redirect_url=f'{DOMAIN}/{redirect_path}')
 
@@ -171,18 +187,23 @@ def slack_interactive_endpoint():
 @user_logged_in
 def forms_view():
     forms = SlackForm.objects.filter(team_id=session['user_data']['team_id']).all()
-    return render_template('forms.html', forms=forms, SLASH_COMMAND=SLASH_COMMAND)
+    return render_template('forms.html', forms=forms, SLASH_COMMAND=SLASH_COMMAND, navs=[dict(title='All forms')])
 
 
 
 @app.route('/submissions', methods=['GET'])
 @user_logged_in
-def get_submissions():
+def submissions_view():
     form_id = request.args.get('formId')
     page = int(request.args.get('page', 1))
     per_page = int(request.args.get('per_page', 10))
 
+    form = SlackForm.objects.filter(id=form_id).first()
+    if form.team_id != session['user_data']['team_id']:
+        return make_response("Form not found", 404)
+
     total = Submission.objects(form_id=form_id).count()
     submissions = Submission.objects(form_id=form_id).skip((page - 1) * per_page).limit(per_page)
 
-    return render_template('submissions.html', submissions=submissions, page=page, per_page=per_page, total=total)
+    return render_template('submissions.html', submissions=submissions, page=page, per_page=per_page, total=total,
+                           navs=[dict(title='All forms', path='/forms'), dict(title=form.name)])

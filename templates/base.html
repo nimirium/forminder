@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Lobster+Two:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href=styles.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <title>{{ page_title or 'Forminder' }}</title>
+    <style>
+        body {
+            color: #632616;
+            font-family: sans-serif;
+            background-color: #D7CDC3;
+        }
+
+        .forminder {
+            font-family: 'Lobster Two', cursive;
+            font-size: 4rem;
+            font-weight: 700;
+        }
+
+        .mygrid-item {
+            background-color: #f5f5f5;
+        }
+        .bg-greenish {
+            background-color: #ACBFA5;
+        }
+        {% block styles %}
+        {% endblock %}
+    </style>
+
+</head>
+<body>
+{% include 'header.html' %}
+
+{% block body %}
+{% endblock %}
+
+</div>
+
+</body>
+</html>
