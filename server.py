@@ -10,6 +10,8 @@ import requests
 from flask import Flask, request, Response, render_template, session, redirect, url_for, make_response
 from pymongo import MongoClient
 from slack_sdk.signature import SignatureVerifier
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 
 from flask_session import Session
 from src import submissions, forms, schedules, constants, slack_ui_blocks
@@ -38,11 +40,19 @@ app.config['SESSION_TYPE'] = 'mongodb'
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=1)
 app.config['SESSION_COOKIE_SECURE'] = True
 app.config['SESSION_COOKIE_NAME'] = SESSION_COOKIE_NAME
+app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['SESSION_MONGODB'] = pymongo_client
 app.config['SESSION_MONGODB_DB'] = MONGO_DB_NAME
 
 Session(app)
 slack_verifier = SignatureVerifier(os.environ['SIGNING_SECRET'])
+
+limiter = Limiter(
+    get_remote_address,
+    app=app,
+    default_limits=["60/minute"],
+    storage_uri="memory://",
+)
 
 
 def verify_slack_request(func, *args, **kwargs):
@@ -188,7 +198,7 @@ def slack_interactive_endpoint():
 @user_logged_in
 def forms_view():
     page = int(request.args.get('page', 1))
-    per_page = int(request.args.get('per_page', 10))
+    per_page = min(int(request.args.get('per_page', 10)), 100)
     total = SlackForm.objects(team_id=session['user_data']['team_id']).count()
     forms = SlackForm.objects(team_id=session['user_data']['team_id']).skip((page - 1) * per_page).limit(per_page)
     return render_template('forms.html', forms=forms, page=page, per_page=per_page,
@@ -201,7 +211,7 @@ def forms_view():
 def submissions_view():
     form_id = request.args.get('formId')
     page = int(request.args.get('page', 1))
-    per_page = int(request.args.get('per_page', 10))
+    per_page = min(int(request.args.get('per_page', 10)), 100)
 
     try:
         form = SlackForm.objects.filter(id=form_id).first()
@@ -216,3 +226,9 @@ def submissions_view():
     return render_template('submissions.html', form_id=form_id, submissions=submissions, page=page, per_page=per_page,
                            total=total, SLASH_COMMAND=SLASH_COMMAND,
                            navs=[dict(title='All Forms', path='/forms'), dict(title=f"{form.name}")])
+
+
+@app.route('/health', methods=['GET'])
+@limiter.exempt()
+def health_view():
+    return make_response("OK", 200)
