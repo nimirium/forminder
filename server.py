@@ -231,7 +231,7 @@ def submissions_view():
 _last_db_healthcheck = None
 
 
-@app.route('/health', methods=['GET'])
+@app.route('/health')
 def health_view():
     global _last_db_healthcheck
     if _last_db_healthcheck is None or _last_db_healthcheck < datetime.now() - timedelta(minutes=1):
