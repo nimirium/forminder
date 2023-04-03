@@ -1,5 +1,7 @@
 __all__ = ['text_response', 'help_text_block', 'form_create_help_text', 'text_block_item']
 
+import os
+
 from src import constants
 from src.constants import SLASH_COMMAND
 from src.utils import DAYS_OF_THE_WEEK
@@ -151,6 +153,7 @@ def form_list_item_action_buttons(form_id):
                     "emoji": True
                 },
                 "value": form_id,
+				"url": f"{os.environ['DOMAIN']}/submissions?formId={form_id}",
                 "action_id": constants.VIEW_FORM_SUBMISSIONS,
             },
             {

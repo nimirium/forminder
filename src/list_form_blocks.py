@@ -1,3 +1,5 @@
+import os
+
 from mongoengine import Q
 
 from src.constants import SLASH_COMMAND
@@ -18,7 +20,8 @@ def list_form_blocks(user_id):
     forms = SlackForm.objects(Q(user_id=user_id) or Q(public=True))
     if forms.count() == 0:
         return [slack_ui_blocks.text_block_item(_no_forms_text())]
-    blocks = [slack_ui_blocks.text_block_item("*List of forms:*"), slack_ui_blocks.divider]
+    blocks = [slack_ui_blocks.text_block_item(
+        f"*List of forms* <{os.environ['DOMAIN']}/forms|[View in the Forminder website]>"), slack_ui_blocks.divider]
     for i, form in enumerate(forms):
         schedules = FormSchedule.objects(form_id=str(form.id))
         for block in slack_ui_blocks.form_list_item(form, schedules):

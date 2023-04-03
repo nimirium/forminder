@@ -169,7 +169,8 @@ def slack_interactive_endpoint():
     result = None
     for action in payload['actions']:
         action_id = action['action_id']
-        if action_id in (constants.FORM_WEEKDAYS, constants.FORM_TIME) or action.get('type') == 'static_select':
+        if action_id in (constants.FORM_WEEKDAYS, constants.FORM_TIME, constants.VIEW_FORM_SUBMISSIONS) \
+                or action.get('type') == 'static_select':
             return Response(status=200, mimetype="application/json")
         value = action['value']
         if action_id == constants.DELETE_FORM:
@@ -187,8 +188,6 @@ def slack_interactive_endpoint():
             result = submissions.submit_scheduled_form(value, user_id, user_name, payload, response_url)
         elif action_id == constants.SUBMIT_FORM_NOW:
             result = submissions.submit_form_now(value, user_id, user_name, payload, response_url)
-        elif action_id == constants.VIEW_FORM_SUBMISSIONS:
-            result = submissions.view_submissions(value, user_id, response_url)
     if result:
         return Response(response=json.dumps(result), status=200, mimetype="application/json")
     return Response(status=200, mimetype="application/json")
