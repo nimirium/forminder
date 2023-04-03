@@ -2,7 +2,7 @@ import json
 import logging
 import os
 import shlex
-from datetime import timedelta
+from datetime import datetime, timedelta
 from urllib.parse import urlparse, parse_qs, urlencode, urlunparse
 
 import bson
@@ -228,7 +228,13 @@ def submissions_view():
                            navs=[dict(title='All Forms', path='/forms'), dict(title=f"{form.name}")])
 
 
+_last_db_healthcheck = None
+
+
 @app.route('/health', methods=['GET'])
-@limiter.exempt()
 def health_view():
+    global _last_db_healthcheck
+    if _last_db_healthcheck is None or _last_db_healthcheck < datetime.now() - timedelta(minutes=1):
+        SlackForm.objects().first()  # check that the DB is not down
+        _last_db_healthcheck = datetime.now()
     return make_response("OK", 200)
