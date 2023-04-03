@@ -31,9 +31,24 @@ class SubmissionField(EmbeddedDocument):
     title = StringField()
     value = StringField()
 
+    @property
+    def display_title(self):
+        if not self.title.endswith('?') and not self.title.endswith(':'):
+            return self.title + ':'
+        return self.title
+
 
 class Submission(Document):
     form_id = StringField()
     user_id = StringField()
+    user_name = StringField()
     fields = ListField(EmbeddedDocumentField(SubmissionField))
     created_at = DateTimeField(default=datetime.datetime.now)
+
+    @property
+    def formatted_date(self):
+        return self.created_at.strftime('%b. %-d, %Y')
+
+    @property
+    def formatted_time(self):
+        return self.created_at.strftime('%H:%M')

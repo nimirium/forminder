@@ -6,7 +6,7 @@
 
     {% for form in forms %}
 
-    <div class="mygrid-item opacity-75 p-7 rounded-xl shadow-md w-full md:w-1/3 lg:w-1/4 p-4 max-w-lg p-5 m-5">
+    {% call card() %}
         <div class="font-semibold text-xl p-1">
             {{ form.name }}
         </div>
@@ -25,12 +25,11 @@
             Submissions: {{ number_of_submissions }}
         </div>
 
-        {% if number_of_submissions > 0 %}
             <button class="bg-greenish rounded-xl p-3 my-2 font-bold shadow-md" style="color: #ffffff">
                 <a href="/submissions?formId={{ form.id | string }}">View submissions</a>
             </button>
-        {% endif %}
-    </div>
+
+    {% endcall %}
 
     {% endfor %}
 
@@ -42,12 +41,33 @@
         <div class="p-1">
             Create a form in slack by running:
         </div>
-        <div class="p-1 font-consolas">
+        <div class="p-1 code">
             /{{ SLASH_COMMAND }} create
         </div>
     </div>
     {% endif %}
 
 </div>
+
+<!-- Pagination -->
+<div class="flex justify-center">
+
+    <div class="m-3">
+        {% if page > 1 %}
+        <a href="{{ url_for('forms_view', page=1, per_page=per_page) }}" class="p-3 underline">First</a>
+        <a href="{{ url_for('forms_view', page=page-1 if page > 1 else 1, per_page=per_page) }}" class="p-3 underline">Previous</a>
+        {% endif %}
+        {% set last_page = (total // per_page) + (1 if total % per_page > 0 else 0) %}
+        <span class="p-3">
+        Page {{ page }} of {{ last_page }}
+        </span>
+        {% if page < last_page %}
+        <a href="
+                {{ url_for('forms_view', page=page+1 if page * per_page < total else page, per_page=per_page) }}" class="p-3 underline">Next</a>
+        <a href="{{ url_for('forms_view', page=(total // per_page) + (1 if total % per_page > 0 else 0), per_page=per_page) }}" class="p-3 underline">Last</a>
+        {% endif %}
+    </div>
+</div>
+<!-- /Pagination -->
 
 {% endblock body %}

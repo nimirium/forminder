@@ -5,6 +5,7 @@ import shlex
 from datetime import timedelta
 from urllib.parse import urlparse, parse_qs, urlencode, urlunparse
 
+import bson
 import requests
 from flask import Flask, request, Response, render_template, session, redirect, url_for, make_response
 from pymongo import MongoClient
@@ -173,9 +174,9 @@ def slack_interactive_endpoint():
         elif action_id == constants.DELETE_SCHEDULE:
             result = schedules.delete_schedule_command(value, user_id, response_url)
         elif action_id == constants.SUBMIT_FORM_SCHEDULED:
-            result = submissions.submit_scheduled_form(value, user_id, payload, response_url)
+            result = submissions.submit_scheduled_form(value, user_id, user_name, payload, response_url)
         elif action_id == constants.SUBMIT_FORM_NOW:
-            result = submissions.submit_form_now(value, user_id, payload, response_url)
+            result = submissions.submit_form_now(value, user_id, user_name, payload, response_url)
         elif action_id == constants.VIEW_FORM_SUBMISSIONS:
             result = submissions.view_submissions(value, user_id, response_url)
     if result:
@@ -186,8 +187,12 @@ def slack_interactive_endpoint():
 @app.route('/forms', methods=['GET'])
 @user_logged_in
 def forms_view():
-    forms = SlackForm.objects.filter(team_id=session['user_data']['team_id']).all()
-    return render_template('forms.html', forms=forms, SLASH_COMMAND=SLASH_COMMAND, navs=[dict(title='All forms')])
+    page = int(request.args.get('page', 1))
+    per_page = int(request.args.get('per_page', 10))
+    total = SlackForm.objects(team_id=session['user_data']['team_id']).count()
+    forms = SlackForm.objects(team_id=session['user_data']['team_id']).skip((page - 1) * per_page).limit(per_page)
+    return render_template('forms.html', forms=forms, page=page, per_page=per_page,
+                           total=total, SLASH_COMMAND=SLASH_COMMAND, navs=[dict(title='All Forms')])
 
 
 
@@ -198,12 +203,16 @@ def submissions_view():
     page = int(request.args.get('page', 1))
     per_page = int(request.args.get('per_page', 10))
 
-    form = SlackForm.objects.filter(id=form_id).first()
+    try:
+        form = SlackForm.objects.filter(id=form_id).first()
+    except bson.errors.InvalidId:
+        return make_response("Form not found", 404)
     if form.team_id != session['user_data']['team_id']:
         return make_response("Form not found", 404)
 
     total = Submission.objects(form_id=form_id).count()
     submissions = Submission.objects(form_id=form_id).skip((page - 1) * per_page).limit(per_page)
 
-    return render_template('submissions.html', submissions=submissions, page=page, per_page=per_page, total=total,
-                           navs=[dict(title='All forms', path='/forms'), dict(title=form.name)])
+    return render_template('submissions.html', form_id=form_id, submissions=submissions, page=page, per_page=per_page,
+                           total=total, SLASH_COMMAND=SLASH_COMMAND,
+                           navs=[dict(title='All Forms', path='/forms'), dict(title=f"{form.name}")])

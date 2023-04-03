@@ -4,8 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://fonts.googleapis.com/css2?family=Lobster+Two:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Source+Code+Pro:wght@500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href=styles.css">
     <script src="https://cdn.tailwindcss.com"></script>
+    {% block scripts %}
+    {% endblock %}
     <title>{{ page_title or 'Forminder' }}</title>
     <style>
         body {
@@ -26,6 +29,10 @@
         .bg-greenish {
             background-color: #ACBFA5;
         }
+        .code {
+            font-family: 'Source Code Pro', monospace;
+            color: black;
+        }
         {% block styles %}
         {% endblock %}
     </style>
@@ -34,8 +41,17 @@
 <body>
 {% include 'header.html' %}
 
+{% macro card() %}
+    <div class="mygrid-item opacity-75 p-7 rounded-xl shadow-md w-full md:w-1/3 lg:w-1/4 p-4 max-w-lg p-5 m-5">
+        {{ caller() }}
+    </div>
+{% endmacro %}
+
 {% block body %}
+
 {% endblock %}
+
+<script>{% include "url-param.js" %}</script>
 
 </div>
 
