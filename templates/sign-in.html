@@ -6,6 +6,7 @@
     <link rel="stylesheet" href="styles.css">
     <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
     <link href="https://fonts.googleapis.com/css2?family=Lobster+Two:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
     <title>Forminder</title>
     <style>
         * {
@@ -32,22 +33,9 @@
             align-items: center;
         }
 
-        .forminder-img {
-            margin-right: 1rem;
-            width: 50%;
-        }
-
-        .text-container {
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: flex-start;
-        }
-
         .welcome {
             font-family: sans-serif;
             font-size: 1.5rem;
-            margin-bottom: 0.5rem;
         }
 
         .forminder {
@@ -60,13 +48,11 @@
             border: none;
             background: none;
             cursor: pointer;
-            margin-top: 1rem;
         }
 
         .slack-button img {
             width: 100%;
             max-width: 200px;
-            margin: 20px 0 20px 0;
         }
 
 
@@ -84,17 +70,29 @@
     </style>
 </head>
 <body>
-<div class="center">
-    <img src="{{url_for('static', filename='forminder_no_bg.png')}}" alt="Forminder" class="forminder-img">
-    <div class="text-container">
-        <div class="welcome">Welcome to</div>
-        <div class="forminder">Forminder</div>
-        <div>
-            <a href="https://slack.com/oauth/v2/authorize?client_id={{SLACK_CLIENT_ID}}&scope=users:read&user_scope=&redirect_uri={{redirect_url}}"
-               class="slack-button">
-                <img src="https://platform.slack-edge.com/img/sign_in_with_slack.png" alt="Sign in with Slack"/>
-            </a>
+
+{% macro sign_in_with_slack() %}
+    <a href="https://slack.com/oauth/v2/authorize?client_id={{ SLACK_CLIENT_ID }}&scope=users:read&user_scope=&redirect_uri={{ redirect_url }}"
+       class="slack-button m-5">
+        <img src="https://platform.slack-edge.com/img/sign_in_with_slack.png" alt="Sign in with Slack"/>
+    </a>
+{% endmacro %}
+
+<div class="flex flex-col">
+    <div class="center flex items-center justify-center">
+        <div class="w-1/2">
+            <img src="{{ url_for('static', filename='forminder_no_bg.png') }}" alt="Forminder" class="">
         </div>
+        <div class="flex flex-col items-start justify-center">
+            <div class="welcome grow">Welcome to</div>
+            <div class="forminder grow">Forminder</div>
+            <div class="hidden md:block">
+                {{ sign_in_with_slack() }}
+            </div>
+        </div>
+    </div>
+    <div class="md:hidden center">
+        {{ sign_in_with_slack() }}
     </div>
 </div>
 </body>
