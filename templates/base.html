@@ -40,6 +40,11 @@
             font-family: 'Source Code Pro', monospace;
             color: black;
         }
+
+        .mybutton {
+            background-color: #ACBFA5;
+            color: white;
+        }
         {% block styles %}
         {% endblock %}
     </style>
@@ -59,6 +64,8 @@
 {% endblock %}
 
 <script>{% include "url-param.js" %}</script>
+{% block scripts_bottom %}
+{% endblock %}
 
 </div>
 

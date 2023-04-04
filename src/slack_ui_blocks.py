@@ -1,4 +1,4 @@
-__all__ = ['text_response', 'help_text_block', 'form_create_help_text', 'text_block_item']
+__all__ = ['text_response', 'help_text_block', 'form_create_help_text', 'text_block_item', 'slack_error_response']
 
 import os
 
@@ -129,6 +129,13 @@ form_create_help_text = f""":information_desk_person: create-form usage: */{SLAS
 :airplane: *Try this example* :airplane:
 /{SLASH_COMMAND} create --form-name=“My Form” --text-field=“First name” --text-field=“Last name” --multiline-field=“Hobbies” --select-field=“Color:blue,red,yellow” --public
 """
+
+
+def slack_error_response(text):
+    return {
+        "response_type": "ephemeral",
+        "text": text
+    }
 
 
 def form_list_item_action_buttons(form_id):

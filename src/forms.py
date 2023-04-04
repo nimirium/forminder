@@ -1,5 +1,6 @@
 import argparse
 import json
+import logging
 from threading import Thread
 from typing import List
 
@@ -21,26 +22,47 @@ create_form_parser.add_argument("--select-field", action='append', nargs='?', de
 create_form_parser.add_argument("--public", action='store_true', default=False)
 
 
-def create_form_command(team_id, user_id, user_name, command_args: List[str], response_url):
+def create_form_command(team_id, team_domain, user_id, user_name, command_args: List[str], command_text, response_url):
     if len(command_args) == 0:
-        return slack_ui_blocks.text_response(slack_ui_blocks.form_create_help_text)
-    params = create_form_parser.parse_args(command_args)
+        logging.info(f"[{user_name}] from [{team_domain}] - no command args, returning help text")
+        return slack_ui_blocks.form_create_help_text
+
+    params, unrecognized_args = create_form_parser.parse_known_args(command_args)
+
+    if unrecognized_args:
+        error_message = f"Unrecognized arguments or invalid input: {', '.join(unrecognized_args)}.\n" \
+                        f"Your command:\n/{SLASH_COMMAND} create {command_text}"
+        return slack_ui_blocks.slack_error_response(error_message)
+
+
     if not params.form_name:
-        return slack_ui_blocks.text_response(slack_ui_blocks.form_create_help_text)
+        logging.info(f"[{user_name}] from [{team_domain}] - missing form name, returning help text")
+        return slack_ui_blocks.text_response(
+            'Command is missing form name, use --form-name="YourFormName" in your command\n\n'
+            f"Your command:\n/{SLASH_COMMAND} create {command_text}\n\n" + slack_ui_blocks.form_create_help_text)
     if not params.text_field and not params.multiline_field and not params.select_field:
-        return slack_ui_blocks.text_response(slack_ui_blocks.form_create_help_text)
+        return slack_ui_blocks.text_response(
+            'Command is missing fields, use --text-field="TextFieldName" in your command. '
+            'You can also use --multiline-field="TextFieldName" or --select-field="FieldName:option1,option2"\n\n'
+            + f"Your command:\n/{SLASH_COMMAND} create {command_text}\n\n"
+            + slack_ui_blocks.form_create_help_text)
 
     fields = []
-    for field_name in params.text_field:
-        fields.append(SlackFormField(type='text', title=field_name))
-    for field_name in params.multiline_field:
-        fields.append(SlackFormField(type='text-multiline', title=field_name))
-    for field_name in params.select_field:
-        if ':' not in field_name:
-            return slack_ui_blocks.text_response(slack_ui_blocks.form_create_help_text)
-        title = field_name.split(':')[0].strip()
-        options = [x.strip() for x in field_name.split(':')[1].split(',')]
-        fields.append(SlackFormField(type='select', title=title, options=options))
+    for arg in command_args:
+        if arg.startswith('--text-field='):
+            field_name = arg[len('--text-field='):]
+            fields.append(SlackFormField(type='text', title=field_name))
+        elif arg.startswith('--multiline-field='):
+            field_name = arg[len('--multiline-field='):]
+            fields.append(SlackFormField(type='text-multiline', title=field_name))
+        elif arg.startswith('--select-field='):
+            field_name = arg[len('--select-field='):]
+            if ':' not in field_name:
+                return slack_ui_blocks.text_response(slack_ui_blocks.form_create_help_text)
+            title = field_name.split(':')[0].strip()
+            options = [x.strip() for x in field_name.split(':')[1].split(',')]
+            fields.append(SlackFormField(type='select', title=title, options=options))
+
     form_kwargs = dict(
         team_id=team_id,
         user_id=user_id,

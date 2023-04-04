@@ -1,13 +1,17 @@
+import csv
+import io
 import json
 import logging
 import os
+import re
 import shlex
 from datetime import datetime, timedelta
-from urllib.parse import urlparse, parse_qs, urlencode, urlunparse
 
 import bson
+import openpyxl
+from openpyxl.utils import get_column_letter
 import requests
-from flask import Flask, request, Response, render_template, session, redirect, url_for, make_response
+from flask import Flask, request, Response, render_template, session, redirect, url_for, make_response, send_file
 from pymongo import MongoClient
 from slack_sdk.signature import SignatureVerifier
 from flask_limiter import Limiter
@@ -65,15 +69,6 @@ def verify_slack_request(func, *args, **kwargs):
     return wrapper
 
 
-def _remove_code_param(url):
-    parsed_url = urlparse(url)
-    query_params = parse_qs(parsed_url.query)
-    query_params.pop('code', None)
-    new_query = urlencode(query_params, doseq=True)
-    new_url = urlunparse(parsed_url._replace(query=new_query))
-    return new_url
-
-
 def user_is_logged_in():
     return 'access_token' in session and 'user_data' in session
 
@@ -115,6 +110,25 @@ def user_logged_in(func, *args, **kwargs):
     return wrapper
 
 
+def form_belongs_to_user_workspace(func, *args, **kwargs):
+    def wrapper():
+        form_id = request.args.get('formId')
+        if not form_id:
+            return make_response("You must provide formId query parameter", 400)
+        try:
+            form = SlackForm.objects.filter(id=form_id).first()
+        except bson.errors.InvalidId:
+            return make_response("Form not found", 404)
+        if form.team_id != session['user_data']['team_id']:
+            return make_response("Form not found", 404)
+        request.slack_form_id = form_id
+        request.slack_form = form
+        return func(*args, **kwargs)
+
+    wrapper.__name__ = func.__name__
+    return wrapper
+
+
 @app.route('/')
 def index():
     if user_is_logged_in():
@@ -142,16 +156,21 @@ def logout():
 @verify_slack_request
 def slack_webhook():
     team_id = request.form['team_id']
+    team_domain = request.form['team_domain']
     user_id = request.form['user_id']
     user_name = request.form['user_name']
     response_url = request.form['response_url']
     command_text = (request.form['text'] or '').replace("”", '"').replace("“", '"')
+    command_text = re.sub(r'\s*=\s*', '=', command_text)  # Remove spaces before and after the equal sign
     args = shlex.split(command_text)
+    logging.info(f"[{user_name}] from [{team_domain}] called /{SLASH_COMMAND} {command_text}")
     result = None
     if len(args) < 1:
+        logging.info(f"[{user_name}] from [{team_domain}] - Returning help text block")
         result = slack_ui_blocks.help_text_block
     elif args[0] == "create":
-        result = forms.create_form_command(team_id, user_id, user_name, args[1:], response_url)
+        logging.info(f"[{user_name}] from [{team_domain}] - Trying to create form")
+        result = forms.create_form_command(team_id, team_domain, user_id, user_name, args[1:], command_text, response_url)
     elif args[0] == "list":
         result = forms.list_forms_command(user_id, response_url)
     if result:
@@ -204,27 +223,79 @@ def forms_view():
                            total=total, SLASH_COMMAND=SLASH_COMMAND, navs=[dict(title='All Forms')])
 
 
-
 @app.route('/submissions', methods=['GET'])
 @user_logged_in
+@form_belongs_to_user_workspace
 def submissions_view():
-    form_id = request.args.get('formId')
+    form_id = request.slack_form_id
+    form = request.slack_form
     page = int(request.args.get('page', 1))
     per_page = min(int(request.args.get('per_page', 10)), 100)
-
-    try:
-        form = SlackForm.objects.filter(id=form_id).first()
-    except bson.errors.InvalidId:
-        return make_response("Form not found", 404)
-    if form.team_id != session['user_data']['team_id']:
-        return make_response("Form not found", 404)
 
     total = Submission.objects(form_id=form_id).count()
     submissions = Submission.objects(form_id=form_id).skip((page - 1) * per_page).limit(per_page)
 
     return render_template('submissions.html', form_id=form_id, submissions=submissions, page=page, per_page=per_page,
                            total=total, SLASH_COMMAND=SLASH_COMMAND,
-                           navs=[dict(title='All Forms', path='/forms'), dict(title=f"{form.name}")])
+                           navs=[dict(title='All Forms', path='/forms'), dict(title=form.name)])
+
+
+@app.route('/submissions/export/csv')
+@user_logged_in
+@form_belongs_to_user_workspace
+def export_submissions_csv():
+    form_id = request.slack_form_id
+    form = SlackForm.objects.get(id=form_id)
+    submissions = Submission.objects(form_id=form_id)
+
+    csv_data = io.StringIO()
+    writer = csv.writer(csv_data)
+    writer.writerow(['submitted by', 'date'] + [field.title for field in form.fields])  # Columns
+
+    for submission in submissions:
+        row = [submission.user_name, f"{submission.formatted_date} {submission.formatted_time}"]
+        field_values = {field.title: field.value for field in submission.fields}
+        row.extend([field_values.get(field.title, '') for field in form.fields])
+        writer.writerow(row)
+
+    csv_data.seek(0)
+    csv_bytes = io.BytesIO(csv_data.getvalue().encode())
+
+    return send_file(csv_bytes, mimetype='text/csv', as_attachment=True, download_name=f'{form.name}.csv')
+
+
+@app.route('/submissions/export/xlsx')
+@user_logged_in
+@form_belongs_to_user_workspace
+def export_submissions_xlsx():
+    form_id = request.slack_form_id
+    form = SlackForm.objects.get(id=form_id)
+    submissions = Submission.objects(form_id=form_id)
+
+    wb = openpyxl.Workbook()
+    ws = wb.active
+
+    # Write headers
+    headers = ['submitted by', 'date'] + [field.title for field in form.fields]
+    for col_num, header in enumerate(headers, 1):
+        col_letter = get_column_letter(col_num)
+        ws[f'{col_letter}1'] = header
+
+    # Write data
+    for row_num, submission in enumerate(submissions, 2):
+        row_data = [submission.user_name, f"{submission.formatted_date} {submission.formatted_time}"]
+        field_values = {field.title: field.value for field in submission.fields}
+        row_data.extend([field_values.get(field.title, '') for field in form.fields])
+
+        for col_num, cell_value in enumerate(row_data, 1):
+            col_letter = get_column_letter(col_num)
+            ws[f'{col_letter}{row_num}'] = cell_value
+
+    xlsx_data = io.BytesIO()
+    wb.save(xlsx_data)
+    xlsx_data.seek(0)
+    return send_file(xlsx_data, mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                     as_attachment=True, download_name=f'{form.name}.xlsx')
 
 
 _last_db_healthcheck = None

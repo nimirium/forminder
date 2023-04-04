@@ -2,6 +2,21 @@
 
 {% block body %}
 
+    <div class="flex justify-around">
+        <div>
+            <span>
+                Export as
+            </span>
+            <select name="export" id="export" class="p-2 m-1 rounded-md shadow">
+                <option value="csv">CSV</option>
+                <option value="xlsx">XLSX</option>
+            </select>
+            <button id="download-btn" class="mybutton p-2 m-1 rounded">
+                Download
+            </button>
+        </div>
+    </div>
+
     <div class="flex flex-wrap justify-center place-content-evenly">
 
     {% for submission in submissions %}
@@ -74,4 +89,16 @@
 </div>
 <!-- /Pagination -->
 
+{% endblock %}
+
+{% block scripts_bottom %}
+<script>
+    const exportCsvUrl = "{{ url_for('export_submissions_csv', formId=form_id) }}";
+    const exportXlsxUrl = "{{ url_for('export_submissions_xlsx', formId=form_id) }}";
+
+    document.getElementById("download-btn").addEventListener("click", function() {
+        let exportType = document.getElementById("export").value;
+        window.location.href = exportType === 'csv' ? exportCsvUrl : exportXlsxUrl;
+    });
+</script>
 {% endblock %}
