@@ -12,6 +12,7 @@ from src.constants import SLASH_COMMAND
 from src.list_form_blocks import list_form_blocks
 from src.models.form import SlackForm, SlackFormField
 from src.models.schedule import ScheduledEvent, FormSchedule
+from src.slack_api.slack_user import SlackUser
 from src.slack_scheduler import delete_slack_scheduled_message
 
 create_form_parser = argparse.ArgumentParser()
@@ -19,33 +20,31 @@ create_form_parser.add_argument("--form-name")
 create_form_parser.add_argument("--text-field", action='append', nargs='?', default=[])
 create_form_parser.add_argument("--multiline-field", action='append', nargs='?', default=[])
 create_form_parser.add_argument("--select-field", action='append', nargs='?', default=[])
-create_form_parser.add_argument("--public", action='store_true', default=False)
 
 
-def create_form_command(team_id, team_domain, user_id, user_name, command_args: List[str], command_text, response_url):
+def create_form_command(user: SlackUser, command_args: List[str], command_text, response_url):
     if len(command_args) == 0:
-        logging.info(f"[{user_name}] from [{team_domain}] - no command args, returning help text")
-        return slack_ui_blocks.form_create_help_text
+        logging.info(f"[{user.username}] from [{user.team_domain}] - no command args, returning help text")
+        return slack_ui_blocks.text_response(slack_ui_blocks.form_create_help_text)
 
     params, unrecognized_args = create_form_parser.parse_known_args(command_args)
 
     if unrecognized_args:
         error_message = f"Unrecognized arguments or invalid input: {', '.join(unrecognized_args)}.\n" \
-                        f"Your command:\n/{SLASH_COMMAND} create {command_text}"
+                        f"Your command:\n/{SLASH_COMMAND} {command_text}"
         return slack_ui_blocks.slack_error_response(error_message)
 
 
     if not params.form_name:
-        logging.info(f"[{user_name}] from [{team_domain}] - missing form name, returning help text")
-        return slack_ui_blocks.text_response(
-            'Command is missing form name, use --form-name="YourFormName" in your command\n\n'
-            f"Your command:\n/{SLASH_COMMAND} create {command_text}\n\n" + slack_ui_blocks.form_create_help_text)
+        logging.info(f"[{user.username}] from [{user.team_domain}] - missing form name, returning help text")
+        return slack_ui_blocks.slack_error_response(
+            '---\nCommand is missing form name, use --form-name="YourFormName" in your command\n\n'
+            f"Your command:\n/{SLASH_COMMAND} {command_text}\n---")
     if not params.text_field and not params.multiline_field and not params.select_field:
-        return slack_ui_blocks.text_response(
-            'Command is missing fields, use --text-field="TextFieldName" in your command. '
+        return slack_ui_blocks.slack_error_response(
+            '---\nCommand is missing form fields. Use --text-field="TextFieldName" in your command. '
             'You can also use --multiline-field="TextFieldName" or --select-field="FieldName:option1,option2"\n\n'
-            + f"Your command:\n/{SLASH_COMMAND} create {command_text}\n\n"
-            + slack_ui_blocks.form_create_help_text)
+            + f"Your command:\n/{SLASH_COMMAND} {command_text}\n---")
 
     fields = []
     for arg in command_args:
@@ -64,12 +63,11 @@ def create_form_command(team_id, team_domain, user_id, user_name, command_args: 
             fields.append(SlackFormField(type='select', title=title, options=options))
 
     form_kwargs = dict(
-        team_id=team_id,
-        user_id=user_id,
-        user_name=user_name,
+        team_id=user.team_id,
+        user_id=user.id,
+        user_name=user.username,
         name=params.form_name,
         fields=fields,
-        public=params.public,
     )
     Thread(target=create_form__save_and_respond, kwargs=dict(form_kwargs=form_kwargs, response_url=response_url)).start()
     return
@@ -89,13 +87,13 @@ def create_form__save_and_respond(form_kwargs, response_url):
     requests.post(response_url, json.dumps(response))
 
 
-def list_forms_command(user_id, response_url):
-    Thread(target=list_forms__fetch_and_respond, kwargs=dict(user_id=user_id, response_url=response_url)).start()
+def list_forms_command(user: SlackUser, response_url: str):
+    Thread(target=list_forms__fetch_and_respond, kwargs=dict(user_id=user, response_url=response_url)).start()
     return
 
 
-def list_forms__fetch_and_respond(user_id, response_url):
-    blocks = list_form_blocks(user_id)
+def list_forms__fetch_and_respond(user: SlackUser, response_url: str):
+    blocks = list_form_blocks(user)
     response = dict(blocks=blocks)
     requests.post(response_url, json.dumps(response))
 

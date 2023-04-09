@@ -113,21 +113,25 @@ def reminder_select_block(form_id, send_to_options):
 
 
 help_text = f""":information_desk_person: Usage:
-:one: /{SLASH_COMMAND} create
-:two: /{SLASH_COMMAND} list"""
+:magic_wand: /{SLASH_COMMAND} create
+:magic_wand: /{SLASH_COMMAND} list"""
 
 help_text_block = {
     "blocks": [text_block_item(help_text)]
 }
 
-form_create_help_text = f""":information_desk_person: create-form usage: */{SLASH_COMMAND} create [options]*
---form-name - Required, the name of the form
---text-field - Optional, adds a text field to the form
---multiline-field - Optional, adds a multi-line text field to the form
---select-field - Optional, adds a select field to the form
---public Optional, use this to make your form public, otherwise it will only be available to you
-:airplane: *Try this example* :airplane:
-/{SLASH_COMMAND} create --form-name=“My Form” --text-field=“First name” --text-field=“Last name” --multiline-field=“Hobbies” --select-field=“Color:blue,red,yellow” --public
+form_create_help_text = f""":information_desk_person: To create a form, follow these simple steps:
+
+Type: */{SLASH_COMMAND} create [options]*
+
+*Options:*
+- Use *--form-name* followed by the form name you want.
+- To add a single-line text field, use *--text-field* followed by the field name.
+- For a multi-line text field, use *--multiline-field* followed by the field name.
+- To add a dropdown menu, use *--select-field* followed by the field name and the available options separated by commas.
+
+*Example:*
+/{SLASH_COMMAND} create --form-name="Project Update" --text-field="Task Name" --select-field="Progress:Not Started,In Progress,Completed" --multiline-field="Notes or Challenges"
 """
 
 
@@ -138,8 +142,8 @@ def slack_error_response(text):
     }
 
 
-def form_list_item_action_buttons(form_id):
-    return {
+def form_list_item_action_buttons(form_id, can_delete):
+    result = {
         "type": "actions",
         "elements": [
             {
@@ -173,18 +177,20 @@ def form_list_item_action_buttons(form_id):
                 "value": form_id,
                 "action_id": constants.SCHEDULE_FORM,
             },
-            {
-                "type": "button",
-                "text": {
-                    "type": "plain_text",
-                    "text": "Delete Form",
-                    "emoji": True
-                },
-                "value": form_id,
-                "action_id": constants.DELETE_FORM,
-            }
         ]
     }
+    if can_delete:
+        result['elements'].append({
+            "type": "button",
+            "text": {
+                "type": "plain_text",
+                "text": "Delete Form",
+                "emoji": True
+            },
+            "value": form_id,
+            "action_id": constants.DELETE_FORM,
+        })
+    return result
 
 
 def text_and_button(text, button_text, value, action_id):

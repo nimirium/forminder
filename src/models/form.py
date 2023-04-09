@@ -20,7 +20,6 @@ class SlackForm(Document):
     user_name = StringField()
     name = StringField()
     fields = EmbeddedDocumentListField(SlackFormField)
-    public = BooleanField()
     meta = dict(strict=False)
 
     def number_of_submissions(self):

@@ -1,16 +1,15 @@
 import logging
-import os
 
 from dotenv import load_dotenv
-from slack_sdk import WebClient
 
+from src import constants
+from src import slack_ui_blocks
 from src.models.form import SlackForm
 from src.models.schedule import FormSchedule, ScheduledEvent
-from src import slack_ui_blocks
-from src import constants
+from src.slack_api.slack_client import get_slack_client
 
 load_dotenv()
-client = WebClient(token=os.environ.get("SLACK_BOT_TOKEN"))
+client = get_slack_client()
 
 
 __all__ = ['schedule_slack_message', 'delete_slack_scheduled_message']

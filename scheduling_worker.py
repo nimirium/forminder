@@ -1,20 +1,19 @@
 import datetime
 import logging
-import os
 import time
 
 from dotenv import load_dotenv
-from slack_sdk import WebClient
 
+from src import slack_scheduler
 from src.models.connect import connect_to_mongo
 from src.models.schedule import FormSchedule, ScheduledEvent
-from src import slack_scheduler
+from src.slack_api.slack_client import get_slack_client
 
 logging.getLogger().setLevel(logging.INFO)
 logging.basicConfig(format='%(asctime)s - %(levelname)s - %(message)s', level=logging.INFO)
 
 load_dotenv()
-client = WebClient(token=os.environ.get("SLACK_BOT_TOKEN"))
+client = get_slack_client()
 
 
 def schedule_future_messages():

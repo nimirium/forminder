@@ -93,7 +93,6 @@ class TestForms(unittest.TestCase):
             user_name="user_name",
             name="form1",
             fields=[],
-            public=False,
         )
         response_url = "http://example.com"
         self.old_save = SlackForm.save
@@ -109,7 +108,7 @@ class TestForms(unittest.TestCase):
     @patch("src.forms.requests.post")
     def test_delete_form_and_respond(self, mock_post):
         # create a SlackForm instance to delete
-        form = SlackForm(user_id="user1", user_name="user_name", name="form1", fields=[], public=False)
+        form = SlackForm(user_id="user1", user_name="user_name", name="form1", fields=[])
         form.save()
 
         # call the delete_form_and_respond function

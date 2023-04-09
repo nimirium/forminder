@@ -22,22 +22,17 @@ from src import submissions, forms, schedules, constants, slack_ui_blocks
 from src.constants import SLASH_COMMAND
 from src.models.connect import connect_to_mongo
 from src.models.form import Submission, SlackForm
+from src.server_settings import MONGO_DB_URL, CustomRequest, SESSION_COOKIE_NAME, MONGO_DB_NAME, SLACK_CLIENT_ID, \
+    SLACK_CLIENT_SECRET, SLACK_OAUTH_URL, SLACK_USER_INFO_URL, DOMAIN
+from src.slack_api.slack_user import SlackUser
 
 logging.basicConfig(format='%(asctime)s - %(levelname)s - %(message)s', level=logging.INFO)
-
-SLACK_CLIENT_ID = os.environ["SLACK_CLIENT_ID"]
-SLACK_CLIENT_SECRET = os.environ["SLACK_CLIENT_SECRET"]
-SLACK_OAUTH_URL = "https://slack.com/api/oauth.v2.access"
-SLACK_USER_INFO_URL = "https://slack.com/api/users.info"
-DOMAIN = os.environ['DOMAIN']
-MONGO_DB_URL = os.environ['MONGO_DB_URL']
-MONGO_DB_NAME = os.environ['MONGO_DB_NAME']
-SESSION_COOKIE_NAME = 'session'
 
 connect_to_mongo()
 pymongo_client = MongoClient(MONGO_DB_URL)
 
 app = Flask(__name__)
+app.request_class = CustomRequest
 
 app.config['SECRET_KEY'] = os.environ['SESSION_KEY']  # Replace with your secret key
 app.config['SESSION_TYPE'] = 'mongodb'
@@ -62,6 +57,12 @@ limiter = Limiter(
 def verify_slack_request(func, *args, **kwargs):
     def wrapper():
         if slack_verifier.is_valid_request(request.get_data(), request.headers):
+            request.user = SlackUser(
+                user_id=request.form['user_id'],
+                user_name=request.form['user_name'],
+                team_id=request.form['team_id'],
+                team_domain=request.form['team_domain']
+            )
             return func(*args, **kwargs)
         return Response(status=401)
 
@@ -104,13 +105,19 @@ def user_logged_in(func, *args, **kwargs):
 
         if 'access_token' not in session or 'user_data' not in session:
             return redirect(url_for('index', redirect_url=request.url))
+        request.user = SlackUser(
+            user_id=session['user_data']['user_id'],
+            user_name=session['user_data']['user_name'],
+            team_id=session['user_data']['team_id'],
+            team_domain=session['user_data']['team_domain'],
+        )
         return func(*args, **kwargs)
 
     wrapper.__name__ = func.__name__
     return wrapper
 
 
-def form_belongs_to_user_workspace(func, *args, **kwargs):
+def form_visible_to_user(func, *args, **kwargs):
     def wrapper():
         form_id = request.args.get('formId')
         if not form_id:
@@ -119,9 +126,8 @@ def form_belongs_to_user_workspace(func, *args, **kwargs):
             form = SlackForm.objects.filter(id=form_id).first()
         except bson.errors.InvalidId:
             return make_response("Form not found", 404)
-        if form.team_id != session['user_data']['team_id']:
+        if not form.team_id != request.user.team_id:
             return make_response("Form not found", 404)
-        request.slack_form_id = form_id
         request.slack_form = form
         return func(*args, **kwargs)
 
@@ -155,24 +161,21 @@ def logout():
 @app.route("/slash-command", methods=['POST'])
 @verify_slack_request
 def slack_webhook():
-    team_id = request.form['team_id']
-    team_domain = request.form['team_domain']
-    user_id = request.form['user_id']
-    user_name = request.form['user_name']
+    user: SlackUser = request.user
     response_url = request.form['response_url']
     command_text = (request.form['text'] or '').replace("”", '"').replace("“", '"')
     command_text = re.sub(r'\s*=\s*', '=', command_text)  # Remove spaces before and after the equal sign
     args = shlex.split(command_text)
-    logging.info(f"[{user_name}] from [{team_domain}] called /{SLASH_COMMAND} {command_text}")
+    logging.info(f"[{user.username}] from [{user.team_domain}] called /{SLASH_COMMAND} {command_text}")
     result = None
     if len(args) < 1:
-        logging.info(f"[{user_name}] from [{team_domain}] - Returning help text block")
+        logging.info(f"[{user.username}] from [{user.team_domain}] - Returning help text block")
         result = slack_ui_blocks.help_text_block
     elif args[0] == "create":
-        logging.info(f"[{user_name}] from [{team_domain}] - Trying to create form")
-        result = forms.create_form_command(team_id, team_domain, user_id, user_name, args[1:], command_text, response_url)
+        logging.info(f"[{user.username}] from [{user.team_domain}] - Trying to create form")
+        result = forms.create_form_command(user, args[1:], command_text, response_url)
     elif args[0] == "list":
-        result = forms.list_forms_command(user_id, response_url)
+        result = forms.list_forms_command(user, response_url)
     if result:
         return Response(response=json.dumps(result), status=200, mimetype="application/json")
     return Response(status=200, mimetype="application/json")
@@ -181,10 +184,9 @@ def slack_webhook():
 @app.route("/interactive", methods=['POST'])
 @verify_slack_request
 def slack_interactive_endpoint():
+    user: SlackUser = request.user
     payload = json.loads(request.form['payload'])
     response_url = payload['response_url']
-    user_id = payload['user']['id']
-    user_name = payload['user']['username']
     result = None
     for action in payload['actions']:
         action_id = action['action_id']
@@ -193,20 +195,20 @@ def slack_interactive_endpoint():
             return Response(status=200, mimetype="application/json")
         value = action['value']
         if action_id == constants.DELETE_FORM:
-            result = forms.delete_form_command(value, user_id, response_url)
+            result = forms.delete_form_command(value, user.id, response_url)
         elif action_id == constants.FILL_FORM_NOW:
             result = forms.fill_form_now_command(value, response_url)
         elif action_id == constants.SCHEDULE_FORM:
             result = schedules.schedule_form_command(value, response_url)
         elif action_id == constants.CREATE_FORM_SCHEDULE:
             schedule_form_state = payload['state']['values']
-            result = schedules.create_form_schedule_command(value, user_id, user_name, schedule_form_state, response_url)
+            result = schedules.create_form_schedule_command(value, user, schedule_form_state, response_url)
         elif action_id == constants.DELETE_SCHEDULE:
-            result = schedules.delete_schedule_command(value, user_id, response_url)
+            result = schedules.delete_schedule_command(value, user.id, response_url)
         elif action_id == constants.SUBMIT_FORM_SCHEDULED:
-            result = submissions.submit_scheduled_form(value, user_id, user_name, payload, response_url)
+            result = submissions.submit_scheduled_form(value, user, payload, response_url)
         elif action_id == constants.SUBMIT_FORM_NOW:
-            result = submissions.submit_form_now(value, user_id, user_name, payload, response_url)
+            result = submissions.submit_form_now(value, user, payload, response_url)
     if result:
         return Response(response=json.dumps(result), status=200, mimetype="application/json")
     return Response(status=200, mimetype="application/json")
@@ -217,34 +219,36 @@ def slack_interactive_endpoint():
 def forms_view():
     page = int(request.args.get('page', 1))
     per_page = min(int(request.args.get('per_page', 10)), 100)
-    total = SlackForm.objects(team_id=session['user_data']['team_id']).count()
-    forms = SlackForm.objects(team_id=session['user_data']['team_id']).skip((page - 1) * per_page).limit(per_page)
-    return render_template('forms.html', forms=forms, page=page, per_page=per_page,
+    team_id = session['user_data']['team_id']
+    total = SlackForm.objects(team_id=team_id).count()
+    page_forms = SlackForm.objects(team_id=team_id).skip((page - 1) * per_page).limit(per_page)
+    return render_template('forms.html', forms=page_forms, page=page, per_page=per_page,
                            total=total, SLASH_COMMAND=SLASH_COMMAND, navs=[dict(title='All Forms')])
 
 
 @app.route('/submissions', methods=['GET'])
 @user_logged_in
-@form_belongs_to_user_workspace
+@form_visible_to_user
 def submissions_view():
-    form_id = request.slack_form_id
+    request.slack_form: SlackForm
+    form_id = request.slack_form.id
     form = request.slack_form
     page = int(request.args.get('page', 1))
     per_page = min(int(request.args.get('per_page', 10)), 100)
 
     total = Submission.objects(form_id=form_id).count()
-    submissions = Submission.objects(form_id=form_id).skip((page - 1) * per_page).limit(per_page)
+    page_submissions = Submission.objects(form_id=form_id).skip((page - 1) * per_page).limit(per_page)
 
-    return render_template('submissions.html', form_id=form_id, submissions=submissions, page=page, per_page=per_page,
-                           total=total, SLASH_COMMAND=SLASH_COMMAND,
+    return render_template('submissions.html', form_id=form_id, submissions=page_submissions, page=page,
+                           per_page=per_page, total=total, SLASH_COMMAND=SLASH_COMMAND,
                            navs=[dict(title='All Forms', path='/forms'), dict(title=form.name)])
 
 
 @app.route('/submissions/export/csv')
 @user_logged_in
-@form_belongs_to_user_workspace
+@form_visible_to_user
 def export_submissions_csv():
-    form_id = request.slack_form_id
+    form_id = request.slack_form.id
     form = SlackForm.objects.get(id=form_id)
     submissions = Submission.objects(form_id=form_id)
 
@@ -266,9 +270,9 @@ def export_submissions_csv():
 
 @app.route('/submissions/export/xlsx')
 @user_logged_in
-@form_belongs_to_user_workspace
+@form_visible_to_user
 def export_submissions_xlsx():
-    form_id = request.slack_form_id
+    form_id = request.slack_form.id
     form = SlackForm.objects.get(id=form_id)
     submissions = Submission.objects(form_id=form_id)
 
