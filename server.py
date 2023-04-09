@@ -57,12 +57,6 @@ limiter = Limiter(
 def verify_slack_request(func, *args, **kwargs):
     def wrapper():
         if slack_verifier.is_valid_request(request.get_data(), request.headers):
-            request.user = SlackUser(
-                user_id=request.form['user_id'],
-                user_name=request.form['user_name'],
-                team_id=request.form['team_id'],
-                team_domain=request.form['team_domain']
-            )
             return func(*args, **kwargs)
         return Response(status=401)
 
@@ -161,7 +155,12 @@ def logout():
 @app.route("/slash-command", methods=['POST'])
 @verify_slack_request
 def slack_webhook():
-    user: SlackUser = request.user
+    user = SlackUser(
+        user_id=request.form['user_id'],
+        user_name=request.form['user_name'],
+        team_id=request.form['team_id'],
+        team_domain=request.form['team_domain']
+    )
     response_url = request.form['response_url']
     command_text = (request.form['text'] or '').replace("”", '"').replace("“", '"')
     command_text = re.sub(r'\s*=\s*', '=', command_text)  # Remove spaces before and after the equal sign
@@ -184,8 +183,13 @@ def slack_webhook():
 @app.route("/interactive", methods=['POST'])
 @verify_slack_request
 def slack_interactive_endpoint():
-    user: SlackUser = request.user
     payload = json.loads(request.form['payload'])
+    user = SlackUser(
+        user_id=payload['user']['id'],
+        user_name=payload['user']['username'],
+        team_id=payload['user']['team_id'],
+        team_domain=payload['team']['domain'],
+    )
     response_url = payload['response_url']
     result = None
     for action in payload['actions']:

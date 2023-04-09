@@ -45,6 +45,11 @@ def create_form_command(user: SlackUser, command_args: List[str], command_text, 
             '---\nCommand is missing form fields. Use --text-field="TextFieldName" in your command. '
             'You can also use --multiline-field="TextFieldName" or --select-field="FieldName:option1,option2"\n\n'
             + f"Your command:\n/{SLASH_COMMAND} {command_text}\n---")
+    if SlackForm.objects(team_id=user.team_id, name=params.form_name).count() > 0:
+        logging.info(f"[{user.username}] from [{user.team_domain}] - form name '{params.form_name}' already exists for this team")
+        return slack_ui_blocks.slack_error_response(
+            f'---\nA form with the name "{params.form_name}" already exists, please use a different name\n\n'
+            f"Your command:\n/{SLASH_COMMAND} {command_text}\n---")
 
     fields = []
     for arg in command_args:
@@ -88,7 +93,7 @@ def create_form__save_and_respond(form_kwargs, response_url):
 
 
 def list_forms_command(user: SlackUser, response_url: str):
-    Thread(target=list_forms__fetch_and_respond, kwargs=dict(user_id=user, response_url=response_url)).start()
+    Thread(target=list_forms__fetch_and_respond, kwargs=dict(user=user, response_url=response_url)).start()
     return
 
 
