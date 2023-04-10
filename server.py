@@ -121,6 +121,7 @@ def form_visible_to_user(func, *args, **kwargs):
         except bson.errors.InvalidId:
             return make_response("Form not found", 404)
         if not form.team_id != request.user.team_id:
+            logging.warning(f"User {request.user.id} tried to access a form that doesn't belong to their team")
             return make_response("Form not found", 404)
         request.slack_form = form
         return func(*args, **kwargs)
@@ -199,7 +200,7 @@ def slack_interactive_endpoint():
             return Response(status=200, mimetype="application/json")
         value = action['value']
         if action_id == constants.DELETE_FORM:
-            result = forms.delete_form_command(value, user.id, response_url)
+            result = forms.delete_form_command(value, user, response_url)
         elif action_id == constants.FILL_FORM_NOW:
             result = forms.fill_form_now_command(value, response_url)
         elif action_id == constants.SCHEDULE_FORM:
@@ -208,7 +209,7 @@ def slack_interactive_endpoint():
             schedule_form_state = payload['state']['values']
             result = schedules.create_form_schedule_command(value, user, schedule_form_state, response_url)
         elif action_id == constants.DELETE_SCHEDULE:
-            result = schedules.delete_schedule_command(value, user.id, response_url)
+            result = schedules.delete_schedule_command(value, user, response_url)
         elif action_id == constants.SUBMIT_FORM_SCHEDULED:
             result = submissions.submit_scheduled_form(value, user, payload, response_url)
         elif action_id == constants.SUBMIT_FORM_NOW:

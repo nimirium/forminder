@@ -88,13 +88,13 @@ def create_schedule_and_respond(form_id, user: SlackUser, days_of_the_week, at_t
     requests.post(response_url, json.dumps(result))
 
 
-def delete_schedule_command(schedule_id, user_id, response_url):
+def delete_schedule_command(schedule_id, user, response_url):
     Thread(target=delete_schedule_and_respond,
-           kwargs=dict(schedule_id=schedule_id, user_id=user_id, response_url=response_url)).start()
+           kwargs=dict(schedule_id=schedule_id, user_id=user, response_url=response_url)).start()
     return
 
 
-def delete_schedule_and_respond(schedule_id, user_id, response_url):
+def delete_schedule_and_respond(schedule_id, user, response_url):
     schedule = FormSchedule.objects(id=schedule_id).first()
     if schedule:
         form = SlackForm.objects(id=schedule.form_id).first()
@@ -105,7 +105,7 @@ def delete_schedule_and_respond(schedule_id, user_id, response_url):
         schedule.delete()
         result = slack_ui_blocks.text_block_item(f":white_check_mark: Deleted schedule for {form.name} form - "
                                               f"{schedule.schedule_description()}")
-        blocks = list_form_blocks(user_id)
+        blocks = list_form_blocks(user)
         response = dict(blocks=[result, slack_ui_blocks.divider] + blocks)
         requests.post(response_url, json.dumps(response))
         return

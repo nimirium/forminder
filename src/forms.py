@@ -103,13 +103,13 @@ def list_forms__fetch_and_respond(user: SlackUser, response_url: str):
     requests.post(response_url, json.dumps(response))
 
 
-def delete_form_command(form_id, user_id, response_url):
+def delete_form_command(form_id, user: SlackUser, response_url):
     Thread(target=delete_form_and_respond,
-           kwargs=dict(form_id=form_id, user_id=user_id, response_url=response_url)).start()
+           kwargs=dict(form_id=form_id, user=user, response_url=response_url)).start()
     return
 
 
-def delete_form_and_respond(form_id, user_id, response_url):
+def delete_form_and_respond(form_id, user, response_url):
     form = SlackForm.objects(id=form_id).first()
     if not form:
         response = slack_ui_blocks.text_response("Couldn't delete form because it does not exist")
@@ -123,7 +123,7 @@ def delete_form_and_respond(form_id, user_id, response_url):
         schedule.delete()
     form.delete()
     action_result = slack_ui_blocks.text_block_item(f":white_check_mark: Deleted form '{form.name}'")
-    form_blocks = list_form_blocks(user_id)
+    form_blocks = list_form_blocks(user)
     response = dict(blocks=[action_result, slack_ui_blocks.divider] + form_blocks)
     requests.post(response_url, json.dumps(response))
 
