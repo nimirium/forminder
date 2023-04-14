@@ -152,6 +152,16 @@ def form_list_item_action_buttons(form_id, can_delete):
                 "type": "button",
                 "text": {
                     "type": "plain_text",
+                    "text": "Schedule",
+                    "emoji": True
+                },
+                "value": form_id,
+                "action_id": constants.SCHEDULE_FORM,
+            },
+            {
+                "type": "button",
+                "text": {
+                    "type": "plain_text",
                     "text": "Fill now",
                     "emoji": True
                 },
@@ -168,16 +178,6 @@ def form_list_item_action_buttons(form_id, can_delete):
                 "value": form_id,
 				"url": f"{os.environ['DOMAIN']}/submissions?formId={form_id}",
                 "action_id": constants.VIEW_FORM_SUBMISSIONS,
-            },
-            {
-                "type": "button",
-                "text": {
-                    "type": "plain_text",
-                    "text": "Schedule",
-                    "emoji": True
-                },
-                "value": form_id,
-                "action_id": constants.SCHEDULE_FORM,
             },
         ]
     }
