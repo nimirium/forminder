@@ -1,13 +1,7 @@
-__all__ = ['text_response', 'help_text_block', 'form_create_help_text', 'text_block_item', 'slack_error_response']
-
-import os
-
 from src import constants
-from src.constants import SLASH_COMMAND
 from src.utils import DAYS_OF_THE_WEEK
 
-
-divider = {
+divider_block = {
     "type": "divider"
 }
 
@@ -19,12 +13,6 @@ def text_block_item(text):
             "type": "mrkdwn",
             "text": text
         }
-    }
-
-
-def text_response(text):
-    return {
-        "blocks": [text_block_item(text)]
     }
 
 
@@ -112,86 +100,17 @@ def reminder_select_block(form_id, send_to_options):
     }
 
 
-help_text = f""":information_desk_person: Usage:
-:magic_wand: /{SLASH_COMMAND} create
-:magic_wand: /{SLASH_COMMAND} list"""
-
-help_text_block = {
-    "blocks": [text_block_item(help_text)]
-}
-
-form_create_help_text = f""":information_desk_person: To create a form, follow these steps:
-
-:zap: Type: /{SLASH_COMMAND} create [options] :zap:
-
-:jigsaw: Options: :jigsaw:
-Select a name
-    Use --form-name followed by the form name you want.
-Add fields
-    - To add a single-line text field, use --text-field followed by the field name.
-    - For a multi-line text field, use --multiline-field followed by the field name.
-    - To add a dropdown menu, use --select-field followed by the field name and the available options separated by commas.
-
-:airplane: Example: :airplane:
-/{SLASH_COMMAND} create --form-name=“Project Update” --text-field=“Task Name” --select-field=“Progress:Not Started,In Progress,Completed” --multiline-field=“Notes or Challenges”
-"""
-
-
-def slack_error_response(text):
-    return {
-        "response_type": "ephemeral",
-        "text": text
-    }
-
-
 def form_list_item_action_buttons(form_id, can_delete):
     result = {
         "type": "actions",
         "elements": [
-            {
-                "type": "button",
-                "text": {
-                    "type": "plain_text",
-                    "text": "Schedule",
-                    "emoji": True
-                },
-                "value": form_id,
-                "action_id": constants.SCHEDULE_FORM,
-            },
-            {
-                "type": "button",
-                "text": {
-                    "type": "plain_text",
-                    "text": "Fill now",
-                    "emoji": True
-                },
-                "value": form_id,
-                "action_id": constants.FILL_FORM_NOW,
-            },
-            {
-                "type": "button",
-                "text": {
-                    "type": "plain_text",
-                    "text": "View submissions",
-                    "emoji": True
-                },
-                "value": form_id,
-				"url": f"{os.environ['DOMAIN']}/submissions?formId={form_id}",
-                "action_id": constants.VIEW_FORM_SUBMISSIONS,
-            },
+            button_block("Schedule", form_id, constants.SCHEDULE_FORM),
+            button_block("Fill now", form_id, constants.FILL_FORM_NOW),
+            # view_submissions_button(form_id),
         ]
     }
     if can_delete:
-        result['elements'].append({
-            "type": "button",
-            "text": {
-                "type": "plain_text",
-                "text": "Delete Form",
-                "emoji": True
-            },
-            "value": form_id,
-            "action_id": constants.DELETE_FORM,
-        })
+        result['elements'].append(button_block("Delete Form", form_id, constants.DELETE_FORM))
     return result
 
 
@@ -202,16 +121,7 @@ def text_and_button(text, button_text, value, action_id):
             "type": "mrkdwn",
             "text": text
         },
-        "accessory": {
-            "type": "button",
-            "text": {
-                "type": "plain_text",
-                "text": button_text,
-                "emoji": True
-            },
-            "value": value,
-            "action_id": action_id
-        }
+        "accessory": button_block(button_text, value, action_id),
     }
 
 
@@ -308,3 +218,22 @@ def form_slack_ui_blocks(form, action_id):
             blocks.append(select_block(field.title, field.options, action=str(field.id)))
     blocks.append(button_block(text="Submit", value=str(form.id), action_id=action_id))
     return blocks
+
+
+def select_form_to_fill(forms, title="*Select a form to fill*"):
+    ##3
+
+    ###
+    blocks = [
+        text_block_item(title),
+    ]
+    for i, form in enumerate(forms):
+        fields_description = ', '.join([f"{f.title} ({f.type})" for f in form.fields])
+        blocks.extend([
+            text_block_item(f":page_with_curl: {form.name}"),
+            text_block_item(f"Fields: {fields_description}"),
+            button_block("Fill now", str(form.id), constants.FILL_FORM_NOW),
+        ])
+        if i < len(forms) - 1:
+            blocks.append(divider_block)
+    return {"blocks":  blocks}

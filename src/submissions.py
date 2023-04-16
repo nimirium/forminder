@@ -3,9 +3,9 @@ from threading import Thread
 
 import requests
 
-from src import slack_ui_blocks
 from src.models.form import SlackForm, Submission, SubmissionField
 from src.slack_api.slack_user import SlackUser
+from src import slack_ui
 
 
 def submit_scheduled_form(form_id, user: SlackUser, payload, response_url):
@@ -29,9 +29,9 @@ def submit_scheduled_form(form_id, user: SlackUser, payload, response_url):
     return
 
 
-def submit_form_and_respond(submission, response_url):
+def submit_form_and_respond(submission: Submission, response_url):
     submission.save()
-    result = slack_ui_blocks.text_response(":herb: The form was submitted :herb:")
+    result = slack_ui.responses.form_was_submitted_response(submission.form_id)
     requests.post(response_url, json.dumps(result))
 
 

@@ -3,7 +3,7 @@ import logging
 from dotenv import load_dotenv
 
 from src import constants
-from src import slack_ui_blocks
+from src.slack_ui import blocks as slack_ui_blocks
 from src.models.form import SlackForm
 from src.models.schedule import FormSchedule, ScheduledEvent
 from src.slack_api.slack_client import get_slack_client

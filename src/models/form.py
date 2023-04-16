@@ -1,7 +1,7 @@
 import datetime
 
-from mongoengine import Document, StringField, EmbeddedDocument, ListField, EmbeddedDocumentField, BooleanField, \
-    DateTimeField, EmbeddedDocumentListField
+from mongoengine import Document, StringField, EmbeddedDocument, ListField, EmbeddedDocumentField, DateTimeField, \
+    EmbeddedDocumentListField
 
 from src.utils import str_object_id
 

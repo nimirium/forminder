@@ -9,22 +9,23 @@ from datetime import datetime, timedelta
 
 import bson
 import openpyxl
-from openpyxl.utils import get_column_letter
 import requests
 from flask import Flask, request, Response, render_template, session, redirect, url_for, make_response, send_file
-from pymongo import MongoClient
-from slack_sdk.signature import SignatureVerifier
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
-
 from flask_session import Session
-from src import submissions, forms, schedules, constants, slack_ui_blocks
+from openpyxl.utils import get_column_letter
+from pymongo import MongoClient
+from slack_sdk.signature import SignatureVerifier
+
+from src import submissions, forms, schedules, constants
 from src.constants import SLASH_COMMAND
 from src.models.connect import connect_to_mongo
 from src.models.form import Submission, SlackForm
 from src.server_settings import MONGO_DB_URL, CustomRequest, SESSION_COOKIE_NAME, MONGO_DB_NAME, SLACK_CLIENT_ID, \
     SLACK_CLIENT_SECRET, SLACK_OAUTH_URL, SLACK_USER_INFO_URL, DOMAIN
 from src.slack_api.slack_user import SlackUser
+from src.slack_ui import responses as slack_ui_responses
 
 logging.basicConfig(format='%(asctime)s - %(levelname)s - %(message)s', level=logging.INFO)
 
@@ -100,10 +101,9 @@ def user_logged_in(func, *args, **kwargs):
         if 'access_token' not in session or 'user_data' not in session:
             return redirect(url_for('index', redirect_url=request.url))
         request.user = SlackUser(
-            user_id=session['user_data']['user_id'],
-            user_name=session['user_data']['user_name'],
+            user_id=session['user_data']['id'],
+            user_name=session['user_data']['name'],
             team_id=session['user_data']['team_id'],
-            team_domain=session['user_data']['team_domain'],
         )
         return func(*args, **kwargs)
 
@@ -120,7 +120,9 @@ def form_visible_to_user(func, *args, **kwargs):
             form = SlackForm.objects.filter(id=form_id).first()
         except bson.errors.InvalidId:
             return make_response("Form not found", 404)
-        if not form.team_id != request.user.team_id:
+        # noinspection PyUnresolvedReferences
+        if form.team_id != request.user.team_id:
+            # noinspection PyUnresolvedReferences
             logging.warning(f"User {request.user.id} tried to access a form that doesn't belong to their team")
             return make_response("Form not found", 404)
         request.slack_form = form
@@ -160,22 +162,24 @@ def slack_webhook():
         user_id=request.form['user_id'],
         user_name=request.form['user_name'],
         team_id=request.form['team_id'],
-        team_domain=request.form['team_domain']
     )
     response_url = request.form['response_url']
     command_text = (request.form['text'] or '').replace("”", '"').replace("“", '"')
     command_text = re.sub(r'\s*=\s*', '=', command_text)  # Remove spaces before and after the equal sign
     args = shlex.split(command_text)
-    logging.info(f"[{user.username}] from [{user.team_domain}] called /{SLASH_COMMAND} {command_text}")
+    logging.info(f"[{user.username}] from [{user.team_id}] called /{SLASH_COMMAND} {command_text}")
     result = None
     if len(args) < 1:
-        logging.info(f"[{user.username}] from [{user.team_domain}] - Returning help text block")
-        result = slack_ui_blocks.help_text_block
+        logging.info(f"[{user.username}] from [{user.team_id}] - Returning help text block")
+        result = slack_ui_responses.help_text_response
     elif args[0] == "create":
-        logging.info(f"[{user.username}] from [{user.team_domain}] - Trying to create form")
+        logging.info(f"[{user.username}] from [{user.team_id}] - Trying to create form")
         result = forms.create_form_command(user, args[1:], command_text, response_url)
     elif args[0] == "list":
         result = forms.list_forms_command(user, response_url)
+    elif args[0] == "fill":
+        logging.info(f"[{user.username}] from [{user.team_id}] - Trying to fill form")
+        result = forms.fill_form_command(user, args[1:], response_url)
     if result:
         return Response(response=json.dumps(result), status=200, mimetype="application/json")
     return Response(status=200, mimetype="application/json")
@@ -189,7 +193,6 @@ def slack_interactive_endpoint():
         user_id=payload['user']['id'],
         user_name=payload['user']['username'],
         team_id=payload['user']['team_id'],
-        team_domain=payload['team']['domain'],
     )
     response_url = payload['response_url']
     result = None
@@ -235,14 +238,15 @@ def forms_view():
 @user_logged_in
 @form_visible_to_user
 def submissions_view():
+    # noinspection PyTypeHints
     request.slack_form: SlackForm
-    form_id = request.slack_form.id
+    form_id = str(request.slack_form.id)
     form = request.slack_form
     page = int(request.args.get('page', 1))
     per_page = min(int(request.args.get('per_page', 10)), 100)
 
-    total = Submission.objects(form_id=form_id).count()
-    page_submissions = Submission.objects(form_id=form_id).skip((page - 1) * per_page).limit(per_page)
+    total = Submission.objects.filter(form_id=form_id).count()
+    page_submissions = Submission.objects.filter(form_id=form_id).skip((page - 1) * per_page).limit(per_page)
 
     return render_template('submissions.html', form_id=form_id, submissions=page_submissions, page=page,
                            per_page=per_page, total=total, SLASH_COMMAND=SLASH_COMMAND,
@@ -253,8 +257,10 @@ def submissions_view():
 @user_logged_in
 @form_visible_to_user
 def export_submissions_csv():
+    # noinspection PyUnresolvedReferences
     form_id = request.slack_form.id
     form = SlackForm.objects.get(id=form_id)
+    # noinspection PyShadowingNames
     submissions = Submission.objects(form_id=form_id)
 
     csv_data = io.StringIO()
@@ -277,8 +283,10 @@ def export_submissions_csv():
 @user_logged_in
 @form_visible_to_user
 def export_submissions_xlsx():
+    # noinspection PyUnresolvedReferences
     form_id = request.slack_form.id
     form = SlackForm.objects.get(id=form_id)
+    # noinspection PyShadowingNames
     submissions = Submission.objects(form_id=form_id)
 
     wb = openpyxl.Workbook()
