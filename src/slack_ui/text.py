@@ -5,7 +5,6 @@ help_text = f""":information_desk_person: Usage:
 :magic_wand: /{SLASH_COMMAND} list
 :magic_wand: /{SLASH_COMMAND} fill"""
 
-
 form_create_help_text = f""":information_desk_person: To create a form, follow these steps:
 
 :zap: Type: /{SLASH_COMMAND} create [options] :zap:
@@ -24,3 +23,9 @@ Add fields
 
 no_forms_text = f""":information_desk_person: There are no forms yet
 :information_source: use “/{SLASH_COMMAND} create” to create one"""
+
+
+def form_was_created_text(form_name):
+    return f""":white_check_mark: Form ’{form_name}' was created
+:information_source: Use “/{SLASH_COMMAND} list” to see your forms
+"""

@@ -14,6 +14,7 @@ from src.models.schedule import ScheduledEvent, FormSchedule
 from src.services.list_of_forms import list_of_forms_blocks
 from src.services.slack_scheduler_service import delete_slack_scheduled_message
 from src.slack_api.slack_user import SlackUser
+from src.slack_ui.text import form_was_created_text
 
 create_form_parser = argparse.ArgumentParser()
 create_form_parser.add_argument("--form-name")
@@ -45,11 +46,6 @@ def create_form_command(user: SlackUser, command_args: List[str], command_text, 
             '---\nCommand is missing form fields. Use --text-field="TextFieldName" in your command. '
             'You can also use --multiline-field="TextFieldName" or --select-field="FieldName:option1,option2"\n\n'
             + f"Your command:\n/{SLASH_COMMAND} {command_text}\n---")
-    if SlackForm.objects(team_id=user.team_id, name=params.form_name).count() > 0:
-        logging.info(f"[{user.username}] from [{user.team_id}] - form name '{params.form_name}' already exists for this team")
-        return slack_ui.responses.text_response(
-            f'---\nA form with the name "{params.form_name}" already exists, please use a different name\n\n'
-            f"Your command:\n/{SLASH_COMMAND} {command_text}\n---")
 
     fields = []
     for arg in command_args:
@@ -66,31 +62,29 @@ def create_form_command(user: SlackUser, command_args: List[str], command_text, 
             title = field_name.split(':')[0].strip()
             options = [x.strip() for x in field_name.split(':')[1].split(',')]
             fields.append(SlackFormField(type='select', title=title, options=options))
-
-    form_kwargs = dict(
-        team_id=user.team_id,
-        user_id=user.id,
-        user_name=user.username,
-        name=params.form_name,
-        fields=fields,
-    )
-    Thread(target=create_form__save_and_respond, kwargs=dict(form_kwargs=form_kwargs, response_url=response_url)).start()
-    return
+    Thread(target=create_form__save_and_respond,
+           kwargs=dict(team_id=user.team_id,
+                       user_id=user.id,
+                       user_name=user.username,
+                       name=params.form_name,
+                       fields=fields,
+                       command_text=command_text,
+                       response_url=response_url)).start()
 
 
-def create_form__save_and_respond(form_kwargs, response_url):
-    existing = SlackForm.objects(**form_kwargs)
-    if existing:
-        response = slack_ui.responses.text_response(":warning: This form already exists! :warning:")
+def create_form__save_and_respond(team_id, user_id, user_name, name, fields, command_text, response_url):
+    if SlackForm.objects(team_id=team_id, name=name).count() > 0:
+        logging.info(f"[{user_name}] from [{team_id}] - form name '{name}' already exists for this team")
+        response = slack_ui.responses.text_response(
+            f'---\nA form with the name "{name}" already exists, please use a different name\n\n'
+            f"Your command:\n/{SLASH_COMMAND} {command_text}\n---")
         requests.post(response_url, json.dumps(response))
         return
-    form = SlackForm(**form_kwargs)
+
+    form = SlackForm(team_id=team_id, user_id=user_id, user_name=user_name, name=name, fields=fields)
     form.save()
-    text = f""":white_check_mark: Form ’{form.name}' was created
-:information_source: Use “/{SLASH_COMMAND} list” to see your forms
-"""
     response = dict(blocks=[
-        slack_ui.blocks.text_block_item(text),
+        slack_ui.blocks.text_block_item(form_was_created_text(form.name)),
         slack_ui.blocks.actions_block(button_elements=[
             slack_ui.elements.button_element("Fill form now", str(form.id), constants.FILL_FORM_NOW),
             slack_ui.elements.button_element("Schedule form", str(form.id), constants.SCHEDULE_FORM),

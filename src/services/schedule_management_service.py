@@ -60,6 +60,7 @@ def create_schedule_and_respond(form_id, user: SlackUser, days_of_the_week, at_t
     if existing.count() > 0:
         result = slack_ui_responses.text_response(":warning: This schedule already exists! :warning:")
         return requests.post(response_url, json.dumps(result))
+    form = SlackForm.objects(id=form_id).first()
     schedule = FormSchedule(
         user_id=user.id,
         user_name=user.username,
@@ -86,7 +87,10 @@ def create_schedule_and_respond(form_id, user: SlackUser, days_of_the_week, at_t
     next_event.scheduled_message_id = scheduled_message_id
     next_event.save()
 
-    result = slack_ui_responses.text_response(":clock3: Schedule was created :clock3:")
+    send_to_description = schedule.send_to if schedule.send_to != 'me' else 'you'
+    result = slack_ui_responses.text_response(f":clock3: Schedule was created :clock3:\n"
+                                              f"Forminder will remind {send_to_description} to fill '{form.name}' "
+                                              f"on {schedule.schedule_description()}")
     requests.post(response_url, json.dumps(result))
 
 
