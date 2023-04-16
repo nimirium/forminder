@@ -8,6 +8,7 @@ import shlex
 from datetime import datetime, timedelta
 
 import bson
+import math
 import openpyxl
 import requests
 from flask import Flask, request, Response, render_template, session, redirect, url_for, make_response, send_file
@@ -224,6 +225,12 @@ def slack_interactive_endpoint():
         elif action_id == constants.LIST_FORMS_NEXT_PAGE:
             current_page = int(action['block_id'].split(':')[-1])  # Extract the current page from the block_id
             result = forms_service.list_forms_command(user, response_url, current_page + 1)
+        elif action_id == constants.LIST_FORMS_FIRST_PAGE:
+            result = forms_service.list_forms_command(user, response_url, 1)
+        elif action_id == constants.LIST_FORMS_LAST_PAGE:
+            total_forms = SlackForm.objects(team_id=user.team_id).count()
+            last_page = math.ceil(total_forms / constants.FORM_ITEMS_PER_PAGE)
+            result = forms_service.list_forms_command(user, response_url, last_page)
 
     if result:
         return Response(response=json.dumps(result), status=200, mimetype="application/json")

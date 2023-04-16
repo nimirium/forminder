@@ -2,6 +2,7 @@ import os
 
 import math
 
+from src.constants import FORM_ITEMS_PER_PAGE
 from src.models.form import SlackForm
 from src.models.schedule import FormSchedule
 from src.slack_api.slack_user import SlackUser
@@ -10,18 +11,18 @@ from src.slack_ui.blocks import text_block_item, divider_block, form_list_item, 
 from src.slack_ui.text import no_forms_text
 
 
-def list_of_forms_blocks(user: SlackUser, page: int = 1, items_per_page: int = 5):
+def list_of_forms_blocks(user: SlackUser, page: int = 1):
     """
     Slack UI blocks with a list of Forms
     """
-    forms = SlackForm.objects(user_id=user.id)
+    forms = SlackForm.objects(team_id=user.team_id)
     total_forms = forms.count()
 
     if total_forms == 0:
         return [text_block_item(no_forms_text)]
 
-    start = (page - 1) * items_per_page
-    end = start + items_per_page
+    start = (page - 1) * FORM_ITEMS_PER_PAGE
+    end = start + FORM_ITEMS_PER_PAGE
     forms = forms[start:end]
     if forms.count() == 0:
         return [text_block_item(no_forms_text)]
@@ -34,9 +35,9 @@ def list_of_forms_blocks(user: SlackUser, page: int = 1, items_per_page: int = 5
         can_delete = form.user_id == user.id or user.is_admin
         blocks.append(form_list_item_action_buttons(str(form.id), can_delete))
         blocks.append(divider_block)
-    total_pages = math.ceil(total_forms / items_per_page)
+    total_pages = math.ceil(total_forms / FORM_ITEMS_PER_PAGE)
     blocks.append(text_block_item(f"Page {page} out of {total_pages}"))
-    pagination_block = pagination_buttons_block(page, total_forms, items_per_page)
+    pagination_block = pagination_buttons_block(page, total_forms, FORM_ITEMS_PER_PAGE)
     if pagination_block:
         blocks.append(pagination_block)
     return blocks

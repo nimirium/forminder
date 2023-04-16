@@ -246,7 +246,17 @@ def pagination_buttons_block(current_page: int, total_items: int, items_per_page
     total_pages = math.ceil(total_items / items_per_page)
     previous_visible = current_page > 1
     next_visible = current_page < total_pages
+    first_page_visible = current_page > 1
+    last_page_visible = current_page < total_pages
     buttons = []
+
+    if first_page_visible:
+        buttons.append({
+            "type": "button",
+            "text": {"type": "plain_text", "text": "First page", "emoji": True},
+            "value": f"first_page",
+            "action_id": constants.LIST_FORMS_FIRST_PAGE,
+        })
 
     if previous_visible:
         buttons.append({
@@ -262,6 +272,14 @@ def pagination_buttons_block(current_page: int, total_items: int, items_per_page
             "text": {"type": "plain_text", "text": "Next page", "emoji": True},
             "value": "next_page",
             "action_id": constants.LIST_FORMS_NEXT_PAGE,
+        })
+
+    if last_page_visible:
+        buttons.append({
+            "type": "button",
+            "text": {"type": "plain_text", "text": "Last page", "emoji": True},
+            "value": f"last_page",
+            "action_id": constants.LIST_FORMS_LAST_PAGE,
         })
 
     if not buttons:

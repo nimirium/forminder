@@ -60,7 +60,7 @@ def create_schedule_and_respond(form_id, user: SlackUser, days_of_the_week, at_t
     if existing.count() > 0:
         result = slack_ui_responses.text_response(":warning: This schedule already exists! :warning:")
         return requests.post(response_url, json.dumps(result))
-    form = SlackForm.objects(id=form_id).first()
+    form = SlackForm.objects(team_id=user.team_id, id=form_id).first()
     schedule = FormSchedule(
         user_id=user.id,
         user_name=user.username,

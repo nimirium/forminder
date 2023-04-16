@@ -16,5 +16,9 @@ FORM_TIME = 'form-time'
 FORM_FIELD_SUBMISSION = 'form-field-submission'
 FORM_FIELD = 'form-field'
 SEND_SCHEDULE_TO = 'send-schedule-to'
+LIST_FORMS_FIRST_PAGE = 'list_forms_first_page'
 LIST_FORMS_PREVIOUS_PAGE = 'list_forms_previous_page'
 LIST_FORMS_NEXT_PAGE = 'list_forms_next_page'
+LIST_FORMS_LAST_PAGE = 'list_forms_last_page'
+
+FORM_ITEMS_PER_PAGE = 5
