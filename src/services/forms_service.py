@@ -99,13 +99,12 @@ def create_form__save_and_respond(form_kwargs, response_url):
     requests.post(response_url, json.dumps(response))
 
 
-def list_forms_command(user: SlackUser, response_url: str):
-    Thread(target=list_forms__fetch_and_respond, kwargs=dict(user=user, response_url=response_url)).start()
-    return
+def list_forms_command(user: SlackUser, response_url: str, page: int = 1):
+    Thread(target=list_forms__fetch_and_respond, kwargs=dict(user=user, response_url=response_url, page=page)).start()
 
 
-def list_forms__fetch_and_respond(user: SlackUser, response_url: str):
-    blocks = list_of_forms_blocks(user)
+def list_forms__fetch_and_respond(user: SlackUser, response_url: str, page: int = 1):
+    blocks = list_of_forms_blocks(user, page)
     response = dict(blocks=blocks)
     requests.post(response_url, json.dumps(response))
 

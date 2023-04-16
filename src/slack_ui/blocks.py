@@ -1,7 +1,9 @@
 from typing import List, Dict
 
+import math
+
 from src import constants
-from src.slack_ui.elements import button_element
+from src.slack_ui.elements import button_element, view_submissions_button_element
 from src.utils import DAYS_OF_THE_WEEK
 
 divider_block = {
@@ -105,13 +107,13 @@ def form_list_item_action_buttons(form_id, can_delete):
     result = {
         "type": "actions",
         "elements": [
-            button_block("Schedule", form_id, constants.SCHEDULE_FORM),
-            button_block("Fill now", form_id, constants.FILL_FORM_NOW),
-            # view_submissions_button(form_id),
+            button_element("Schedule", form_id, constants.SCHEDULE_FORM),
+            button_element("Fill now", form_id, constants.FILL_FORM_NOW),
+            view_submissions_button_element(form_id),
         ]
     }
     if can_delete:
-        result['elements'].append(button_block("Delete Form", form_id, constants.DELETE_FORM))
+        result['elements'].append(button_element("Delete Form", form_id, constants.DELETE_FORM))
     return result
 
 
@@ -122,7 +124,7 @@ def text_and_button(text, button_text, value, action_id):
             "type": "mrkdwn",
             "text": text
         },
-        "accessory": button_block(button_text, value, action_id),
+        "accessory": button_element(button_text, value, action_id),
     }
 
 
@@ -238,3 +240,35 @@ def select_form_to_fill(forms, title="*Select a form to fill*"):
         if i < len(forms) - 1:
             blocks.append(divider_block)
     return {"blocks":  blocks}
+
+
+def pagination_buttons_block(current_page: int, total_items: int, items_per_page: int):
+    total_pages = math.ceil(total_items / items_per_page)
+    previous_visible = current_page > 1
+    next_visible = current_page < total_pages
+    buttons = []
+
+    if previous_visible:
+        buttons.append({
+            "type": "button",
+            "text": {"type": "plain_text", "text": "Previous page", "emoji": True},
+            "value": "prev_page",
+            "action_id": constants.LIST_FORMS_PREVIOUS_PAGE,
+        })
+
+    if next_visible:
+        buttons.append({
+            "type": "button",
+            "text": {"type": "plain_text", "text": "Next page", "emoji": True},
+            "value": "next_page",
+            "action_id": constants.LIST_FORMS_NEXT_PAGE,
+        })
+
+    if not buttons:
+        return None
+
+    return {
+        "type": "actions",
+        "block_id": f"pagination:{current_page}",
+        "elements": buttons
+    }

@@ -218,6 +218,13 @@ def slack_interactive_endpoint():
             result = submissions_service.submit_scheduled_form(value, user, payload, response_url)
         elif action_id == constants.SUBMIT_FORM_NOW:
             result = submissions_service.submit_form_now(value, user, payload, response_url)
+        elif action_id == constants.LIST_FORMS_PREVIOUS_PAGE:
+            current_page = int(action['block_id'].split(':')[-1])  # Extract the current page from the block_id
+            result = forms_service.list_forms_command(user, response_url, current_page - 1)
+        elif action_id == constants.LIST_FORMS_NEXT_PAGE:
+            current_page = int(action['block_id'].split(':')[-1])  # Extract the current page from the block_id
+            result = forms_service.list_forms_command(user, response_url, current_page + 1)
+
     if result:
         return Response(response=json.dumps(result), status=200, mimetype="application/json")
     return Response(status=200, mimetype="application/json")

@@ -1,5 +1,5 @@
 from src.slack_ui.blocks import text_block_item
-from src.slack_ui.elements import view_submissions_button
+from src.slack_ui.elements import view_submissions_button_element
 from src.slack_ui.text import help_text
 
 
@@ -21,7 +21,7 @@ def form_was_submitted_response(form_id):
             {
                 "type": "actions",
                 "elements": [
-                    view_submissions_button(form_id),
+                    view_submissions_button_element(form_id),
                 ]
             },
         ]
