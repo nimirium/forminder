@@ -18,7 +18,8 @@ from openpyxl.utils import get_column_letter
 from pymongo import MongoClient
 from slack_sdk.signature import SignatureVerifier
 
-from src import submissions, forms, schedules, constants
+from src import constants
+from src.services import submissions_service, forms_service, schedule_management_service
 from src.constants import SLASH_COMMAND
 from src.models.connect import connect_to_mongo
 from src.models.form import Submission, SlackForm
@@ -174,12 +175,12 @@ def slack_webhook():
         result = slack_ui_responses.help_text_response
     elif args[0] == "create":
         logging.info(f"[{user.username}] from [{user.team_id}] - Trying to create form")
-        result = forms.create_form_command(user, args[1:], command_text, response_url)
+        result = forms_service.create_form_command(user, args[1:], command_text, response_url)
     elif args[0] == "list":
-        result = forms.list_forms_command(user, response_url)
+        result = forms_service.list_forms_command(user, response_url)
     elif args[0] == "fill":
         logging.info(f"[{user.username}] from [{user.team_id}] - Trying to fill form")
-        result = forms.fill_form_command(user, args[1:], response_url)
+        result = forms_service.fill_form_command(user, args[1:], response_url)
     if result:
         return Response(response=json.dumps(result), status=200, mimetype="application/json")
     return Response(status=200, mimetype="application/json")
@@ -203,20 +204,20 @@ def slack_interactive_endpoint():
             return Response(status=200, mimetype="application/json")
         value = action['value']
         if action_id == constants.DELETE_FORM:
-            result = forms.delete_form_command(value, user, response_url)
+            result = forms_service.delete_form_command(value, user, response_url)
         elif action_id == constants.FILL_FORM_NOW:
-            result = forms.fill_form_now_command(value, response_url)
+            result = forms_service.fill_form_now_command(value, response_url)
         elif action_id == constants.SCHEDULE_FORM:
-            result = schedules.schedule_form_command(value, response_url)
+            result = schedule_management_service.schedule_form_command(value, response_url)
         elif action_id == constants.CREATE_FORM_SCHEDULE:
             schedule_form_state = payload['state']['values']
-            result = schedules.create_form_schedule_command(value, user, schedule_form_state, response_url)
+            result = schedule_management_service.create_form_schedule_command(value, user, schedule_form_state, response_url)
         elif action_id == constants.DELETE_SCHEDULE:
-            result = schedules.delete_schedule_command(value, user, response_url)
+            result = schedule_management_service.delete_schedule_command(value, user, response_url)
         elif action_id == constants.SUBMIT_FORM_SCHEDULED:
-            result = submissions.submit_scheduled_form(value, user, payload, response_url)
+            result = submissions_service.submit_scheduled_form(value, user, payload, response_url)
         elif action_id == constants.SUBMIT_FORM_NOW:
-            result = submissions.submit_form_now(value, user, payload, response_url)
+            result = submissions_service.submit_form_now(value, user, payload, response_url)
     if result:
         return Response(response=json.dumps(result), status=200, mimetype="application/json")
     return Response(status=200, mimetype="application/json")

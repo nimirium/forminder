@@ -21,3 +21,6 @@ Add fields
 :airplane: Example: :airplane:
 /{SLASH_COMMAND} create --form-name=“Project Update” --text-field=“Task Name” --select-field=“Progress:Not Started,In Progress,Completed” --multiline-field=“Notes or Challenges”
 """
+
+no_forms_text = f""":information_desk_person: There are no forms yet
+:information_source: use “/{SLASH_COMMAND} create” to create one"""

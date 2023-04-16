@@ -3,6 +3,19 @@ import os
 from src import constants
 
 
+def button_element(text, value, action_id):
+    return {
+        "type": "button",
+        "text": {
+            "type": "plain_text",
+            "text": text,
+            "emoji": True
+        },
+        "value": value,
+        "action_id": action_id
+    }
+
+
 def button_url_element(text, value, url, action_id):
     return {
         "type": "button",

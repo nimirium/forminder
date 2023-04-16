@@ -1,4 +1,7 @@
+from typing import List, Dict
+
 from src import constants
+from src.slack_ui.elements import button_element
 from src.utils import DAYS_OF_THE_WEEK
 
 divider_block = {
@@ -74,17 +77,15 @@ def button_block(text, value, action_id):
     return {
         "type": "actions",
         "elements": [
-            {
-                "type": "button",
-                "text": {
-                    "type": "plain_text",
-                    "text": text,
-                    "emoji": True
-                },
-                "value": value,
-                "action_id": action_id
-            }
+            button_element(text, value, action_id),
         ]
+    }
+
+
+def actions_block(button_elements: List[Dict]):
+    return {
+        "type": "actions",
+        "elements": button_elements
     }
 
 

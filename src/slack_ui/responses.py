@@ -14,13 +14,6 @@ help_text_response = {
 }
 
 
-def slack_error_response(text):
-    return {
-        "response_type": "ephemeral",
-        "text": text
-    }
-
-
 def form_was_submitted_response(form_id):
     return {
         "blocks": [

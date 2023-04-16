@@ -6,14 +6,14 @@ import requests as requests
 from dotenv import load_dotenv
 from slack_sdk.errors import SlackApiError
 
-from src import constants, slack_scheduler
+from src import constants
+from src.services.list_of_forms import list_of_forms_blocks
+from src.services.slack_scheduler_service import schedule_slack_message, delete_slack_scheduled_message
 from src.slack_ui import blocks as slack_ui_blocks, responses as slack_ui_responses
-from src.list_form_blocks import list_form_blocks
 from src.models.form import SlackForm
 from src.models.schedule import FormSchedule, TimeField, ScheduledEvent
 from src.slack_api.slack_client import get_slack_client
 from src.slack_api.slack_user import SlackUser
-from src.slack_scheduler import delete_slack_scheduled_message
 from src.utils import DAYS_OF_THE_WEEK
 
 load_dotenv()
@@ -71,7 +71,7 @@ def create_schedule_and_respond(form_id, user: SlackUser, days_of_the_week, at_t
     )
     next_event = schedule.save_and_schedule_next()
     try:
-        scheduled_message_id = slack_scheduler.schedule_slack_message(schedule, next_event)
+        scheduled_message_id = schedule_slack_message(schedule, next_event)
     except Exception as e:
         logging.exception(f"Error fetching slack users_info: {schedule=}, {next_event=}")
         next_event.delete()
@@ -107,7 +107,7 @@ def delete_schedule_and_respond(schedule_id, user, response_url):
         schedule.delete()
         result = slack_ui_blocks.text_block_item(f":white_check_mark: Deleted schedule for {form.name} form - "
                                               f"{schedule.schedule_description()}")
-        blocks = list_form_blocks(user)
+        blocks = list_of_forms_blocks(user)
         response = dict(blocks=[result, slack_ui_blocks.divider_block] + blocks)
         requests.post(response_url, json.dumps(response))
         return
