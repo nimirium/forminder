@@ -114,7 +114,7 @@ def create_schedule_and_respond(form_id, user: SlackUser, days_of_the_week, at_t
 
 def delete_schedule_command(schedule_id, user, response_url):
     Thread(target=delete_schedule_and_respond,
-           kwargs=dict(schedule_id=schedule_id, user_id=user, response_url=response_url)).start()
+           kwargs=dict(schedule_id=schedule_id, user=user, response_url=response_url)).start()
     return
 
 
