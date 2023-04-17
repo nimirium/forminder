@@ -107,17 +107,14 @@ def reminder_select_block(form, send_to_options, validation_error: str = None):
     return result
 
 
-def form_list_item_action_buttons(form_id, can_delete):
-    result = {
-        "type": "actions",
-        "elements": [
-            button_element("Schedule", form_id, constants.SCHEDULE_FORM),
-            view_submissions_button_element(form_id),
-        ]
-    }
+def form_list_item_action_buttons(form_id, can_schedule, can_delete):
+    elements = []
+    if can_schedule:
+        elements.append(button_element("Schedule", form_id, constants.SCHEDULE_FORM))
+    elements.append(view_submissions_button_element(form_id))
     if can_delete:
-        result['elements'].append(button_element("Delete Form", form_id, constants.DELETE_FORM))
-    return result
+        elements.append(button_element("Delete Form", form_id, constants.DELETE_FORM))
+    return {"type": "actions", "elements": elements}
 
 
 def text_and_button(text, button_text, value, action_id):
@@ -142,7 +139,7 @@ def form_list_item(form, schedules):
     else:
         blocks.append(text_block_item("Scheduled for:"))
         for schedule in schedules:
-            text = "- " + schedule.schedule_description()
+            text = "- " + schedule.schedule_description() + " to " + schedule.send_to_name()
             blocks.append(text_and_button(text, "Delete Schedule", str(schedule.id), constants.DELETE_SCHEDULE))
     return blocks
 
@@ -227,9 +224,6 @@ def form_slack_ui_blocks(form, action_id):
 
 
 def select_form_to_fill(forms, title="*Select a form to fill*"):
-    ##3
-
-    ###
     blocks = [
         text_block_item(title),
     ]

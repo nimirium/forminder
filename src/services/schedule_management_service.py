@@ -32,6 +32,9 @@ def schedule_form_command(form_id, user, response_url):
 
 
 def send_schedule_form_response(form_id, user: SlackUser, response_url):
+    if FormSchedule.objects(form_id=form_id).count() >= constants.MAX_SCHEDULES_PER_FORM:
+        return requests.post(response_url, json.dumps(
+            slack_ui_responses.text_response(f"A form may have up to {constants.MAX_SCHEDULES_PER_FORM} schedules")))
     form = SlackForm.objects(team_id=user.team_id, id=form_id).first()
     result = reminder_select(form)
     requests.post(response_url, json.dumps(result))
@@ -60,6 +63,9 @@ def create_form_schedule_command(form_id, user: SlackUser, schedule_form_state, 
 
 def create_schedule_and_respond(form_id, user: SlackUser, days_of_the_week, at_time, send_to, response_url):
     form = SlackForm.objects(team_id=user.team_id, id=form_id).first()
+    if FormSchedule.objects(form_id=form_id).count() >= constants.MAX_SCHEDULES_PER_FORM:
+        return requests.post(response_url, json.dumps(
+            slack_ui_responses.text_response(f"A form may have up to {constants.MAX_SCHEDULES_PER_FORM} schedules")))
     if send_to is None:
         result = reminder_select(form, validation_error="*Please select message target*")
         return requests.post(response_url, json.dumps(result))

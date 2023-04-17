@@ -2,6 +2,7 @@ import os
 
 import math
 
+from src import constants
 from src.constants import FORM_ITEMS_PER_PAGE
 from src.models.form import SlackForm
 from src.models.schedule import FormSchedule
@@ -33,7 +34,8 @@ def list_of_forms_blocks(user: SlackUser, page: int = 1):
         for block in form_list_item(form, schedules):
             blocks.append(block)
         can_delete = form.user_id == user.id or user.is_admin
-        blocks.append(form_list_item_action_buttons(str(form.id), can_delete))
+        can_schedule = schedules.count() < constants.MAX_SCHEDULES_PER_FORM
+        blocks.append(form_list_item_action_buttons(str(form.id), can_schedule, can_delete))
         blocks.append(divider_block)
     total_pages = math.ceil(total_forms / FORM_ITEMS_PER_PAGE)
     blocks.append(text_block_item(f"Page {page} out of {total_pages}"))
