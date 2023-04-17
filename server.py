@@ -255,7 +255,7 @@ def submissions_view():
 @form_visible_to_user
 def export_submissions_csv():
     # noinspection PyUnresolvedReferences
-    form_id = request.slack_form.id
+    form_id = str(request.slack_form.id)
     form = SlackForm.objects.get(id=form_id)
     # noinspection PyShadowingNames
     submissions = Submission.objects(form_id=form_id)
@@ -281,7 +281,7 @@ def export_submissions_csv():
 @form_visible_to_user
 def export_submissions_xlsx():
     # noinspection PyUnresolvedReferences
-    form_id = request.slack_form.id
+    form_id = str(request.slack_form.id)
     form = SlackForm.objects.get(id=form_id)
     # noinspection PyShadowingNames
     submissions = Submission.objects(form_id=form_id)
