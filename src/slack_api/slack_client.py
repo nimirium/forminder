@@ -22,7 +22,10 @@ def get_users_info(user_id):
         user_data = users_info.data['user']
         _users_cache[user_id] = {
             'is_admin': user_data['is_admin'],
-            'tz': user_data['tz']
+            'tz': user_data['tz'],
+            'username': user_data['name'],
+            'real_name': user_data['real_name'],
+            'team_id': user_data['team_id'],
         }
     return _users_cache[user_id]
 

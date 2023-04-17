@@ -102,11 +102,7 @@ def user_logged_in(func, *args, **kwargs):
 
         if 'access_token' not in session or 'user_data' not in session:
             return redirect(url_for('index', redirect_url=request.url))
-        request.user = SlackUser(
-            user_id=session['user_data']['id'],
-            user_name=session['user_data']['name'],
-            team_id=session['user_data']['team_id'],
-        )
+        request.user = SlackUser(user_id=session['user_data']['id'])
         return func(*args, **kwargs)
 
     wrapper.__name__ = func.__name__
@@ -160,11 +156,7 @@ def logout():
 @app.route("/slash-command", methods=['POST'])
 @verify_slack_request
 def slack_webhook():
-    user = SlackUser(
-        user_id=request.form['user_id'],
-        user_name=request.form['user_name'],
-        team_id=request.form['team_id'],
-    )
+    user = SlackUser(user_id=request.form['user_id'])
     response_url = request.form['response_url']
     command_text = (request.form['text'] or '').replace("”", '"').replace("“", '"')
     command_text = re.sub(r'\s*=\s*', '=', command_text)  # Remove spaces before and after the equal sign
@@ -191,11 +183,7 @@ def slack_webhook():
 @verify_slack_request
 def slack_interactive_endpoint():
     payload = json.loads(request.form['payload'])
-    user = SlackUser(
-        user_id=payload['user']['id'],
-        user_name=payload['user']['username'],
-        team_id=payload['user']['team_id'],
-    )
+    user = SlackUser(user_id=payload['user']['id'])
     response_url = payload['response_url']
     result = None
     for action in payload['actions']:
@@ -209,7 +197,7 @@ def slack_interactive_endpoint():
         elif action_id == constants.FILL_FORM_NOW:
             result = forms_service.fill_form_now_command(value, response_url)
         elif action_id == constants.SCHEDULE_FORM:
-            result = schedule_management_service.schedule_form_command(value, response_url)
+            result = schedule_management_service.schedule_form_command(value, user, response_url)
         elif action_id == constants.CREATE_FORM_SCHEDULE:
             schedule_form_state = payload['state']['values']
             result = schedule_management_service.create_form_schedule_command(value, user, schedule_form_state, response_url)

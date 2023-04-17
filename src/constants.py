@@ -22,3 +22,4 @@ LIST_FORMS_NEXT_PAGE = 'list_forms_next_page'
 LIST_FORMS_LAST_PAGE = 'list_forms_last_page'
 
 FORM_ITEMS_PER_PAGE = 5
+DEFAULT_SCHEDULE_TIME = '09:00'

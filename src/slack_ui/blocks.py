@@ -91,16 +91,20 @@ def actions_block(button_elements: List[Dict]):
     }
 
 
-def reminder_select_block(form_id, send_to_options):
-    return {
+def reminder_select_block(form, send_to_options, validation_error: str = None):
+    result = {
         "blocks": [
-            select_block("Send a message to: ", send_to_options, action=constants.SEND_SCHEDULE_TO),
+            text_block_item(f"Scheduling '{form.name}'"),
+            select_block("Message target: ", send_to_options, action=constants.SEND_SCHEDULE_TO),
             checkboxes_block("When would you like to be reminded to fill the form?", DAYS_OF_THE_WEEK,
                              constants.FORM_WEEKDAYS),
-            time_picker_block("At", "09:00", constants.FORM_TIME),
-            button_block(text="Send", value=form_id, action_id=constants.CREATE_FORM_SCHEDULE),
+            time_picker_block("At", constants.DEFAULT_SCHEDULE_TIME, constants.FORM_TIME),
+            button_block(text="Send", value=str(form.id), action_id=constants.CREATE_FORM_SCHEDULE),
         ]
     }
+    if validation_error:
+        result['blocks'].append(text_block_item(validation_error))
+    return result
 
 
 def form_list_item_action_buttons(form_id, can_delete):
@@ -108,7 +112,6 @@ def form_list_item_action_buttons(form_id, can_delete):
         "type": "actions",
         "elements": [
             button_element("Schedule", form_id, constants.SCHEDULE_FORM),
-            button_element("Fill now", form_id, constants.FILL_FORM_NOW),
             view_submissions_button_element(form_id),
         ]
     }

@@ -1,6 +1,7 @@
 import logging
 
 from dotenv import load_dotenv
+from slack_sdk.errors import SlackApiError
 
 from src import constants
 from src.slack_ui import blocks as slack_ui_blocks
@@ -12,14 +13,11 @@ load_dotenv()
 client = get_slack_client()
 
 
-__all__ = ['schedule_slack_message', 'delete_slack_scheduled_message']
-
-
 def schedule_slack_message(schedule: FormSchedule, event: ScheduledEvent):
     form = SlackForm.objects(id=schedule.form_id).first()
     blocks = slack_ui_blocks.form_slack_ui_blocks(form, action_id=constants.SUBMIT_FORM_SCHEDULED)
     result = client.chat_scheduleMessage(
-        channel=schedule.user_id if schedule.send_to.lower().strip() == 'me' else schedule.send_to,
+        channel=schedule.send_to,
         text="Hi! It's time to fill a form",
         blocks=blocks,
         post_at=int(event.execution_time_utc.timestamp()),
@@ -36,3 +34,18 @@ def delete_slack_scheduled_message(user_id, slack_message_id):
     )
     logging.info(result)
     logging.info("deleted slack schedule")
+
+
+def handle_forminder_not_in_channel(schedule, event):
+    logging.warning(f"Forminder is not part of channel {schedule.send_to}, can't schedule message. "
+                    f"Instead, sending a message to the schedule creator {schedule.user_name}")
+    try:
+        result = client.chat_scheduleMessage(
+            channel=schedule.user_id,
+            text=f"Hi! You created a schedule to send a form to {schedule.send_to} channel. For this to "
+                 f"work please invite Forminder to {schedule.send_to}",
+            post_at=int(event.execution_time_utc.timestamp()),
+        )
+        logging.info(result)
+    except SlackApiError:
+        logging.exception("Couldn't inform user that they must invite Forminder to channel")

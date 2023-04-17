@@ -8,7 +8,8 @@ from slack_sdk.errors import SlackApiError
 
 from src import constants
 from src.services.list_of_forms import list_of_forms_blocks
-from src.services.slack_scheduler_service import schedule_slack_message, delete_slack_scheduled_message
+from src.services.slack_scheduler_service import schedule_slack_message, delete_slack_scheduled_message, \
+    handle_forminder_not_in_channel
 from src.slack_ui import blocks as slack_ui_blocks, responses as slack_ui_responses
 from src.models.form import SlackForm
 from src.models.schedule import FormSchedule, TimeField, ScheduledEvent
@@ -20,15 +21,19 @@ load_dotenv()
 client = get_slack_client()
 
 
-def schedule_form_command(form_id, response_url):
-    Thread(target=send_schedule_form_response, kwargs=dict(form_id=form_id, response_url=response_url)).start()
+def reminder_select(form, validation_error: str = None):
+    channels_response = client.conversations_list()
+    send_to_options = ['me'] + ['#' + x['name'] for x in channels_response['channels']]
+    return slack_ui_blocks.reminder_select_block(form, send_to_options, validation_error)
+
+def schedule_form_command(form_id, user, response_url):
+    Thread(target=send_schedule_form_response, kwargs=dict(form_id=form_id, user=user, response_url=response_url)).start()
     return
 
 
-def send_schedule_form_response(form_id, response_url):
-    channels_response = client.conversations_list()
-    send_to_options = ['me'] + ['#' + x['name'] for x in channels_response['channels']]
-    result = slack_ui_blocks.reminder_select_block(form_id, send_to_options)
+def send_schedule_form_response(form_id, user: SlackUser, response_url):
+    form = SlackForm.objects(team_id=user.team_id, id=form_id).first()
+    result = reminder_select(form)
     requests.post(response_url, json.dumps(result))
 
 
@@ -39,6 +44,8 @@ def create_form_schedule_command(form_id, user: SlackUser, schedule_form_state, 
     for part in schedule_form_state.values():
         if part.get(constants.SEND_SCHEDULE_TO):
             send_to = part[constants.SEND_SCHEDULE_TO]['selected_option']['value']
+            if send_to == 'me':
+                send_to = user.id
         if part.get(constants.FORM_WEEKDAYS):
             for selected_option in part[constants.FORM_WEEKDAYS]['selected_options']:
                 weekday_number = DAYS_OF_THE_WEEK.index(selected_option['value'])
@@ -52,6 +59,16 @@ def create_form_schedule_command(form_id, user: SlackUser, schedule_form_state, 
 
 
 def create_schedule_and_respond(form_id, user: SlackUser, days_of_the_week, at_time, send_to, response_url):
+    form = SlackForm.objects(team_id=user.team_id, id=form_id).first()
+    if send_to is None:
+        result = reminder_select(form, validation_error="*Please select message target*")
+        return requests.post(response_url, json.dumps(result))
+    if len(days_of_the_week) == 0:
+        result = reminder_select(form, validation_error="*Please select weekdays*")
+        return requests.post(response_url, json.dumps(result))
+
+    if not at_time:
+        at_time = constants.DEFAULT_SCHEDULE_TIME
     hour = int(at_time.split(':')[0])
     minute = int(at_time.split(':')[1])
     time_local = TimeField(hour=hour, minute=minute)
@@ -60,7 +77,6 @@ def create_schedule_and_respond(form_id, user: SlackUser, days_of_the_week, at_t
     if existing.count() > 0:
         result = slack_ui_responses.text_response(":warning: This schedule already exists! :warning:")
         return requests.post(response_url, json.dumps(result))
-    form = SlackForm.objects(team_id=user.team_id, id=form_id).first()
     schedule = FormSchedule(
         user_id=user.id,
         user_name=user.username,
@@ -74,22 +90,24 @@ def create_schedule_and_respond(form_id, user: SlackUser, days_of_the_week, at_t
     try:
         scheduled_message_id = schedule_slack_message(schedule, next_event)
     except Exception as e:
-        logging.exception(f"Error fetching slack users_info: {schedule=}, {next_event=}")
-        next_event.delete()
-        schedule.delete()
-        if isinstance(e, SlackApiError):
+        if isinstance(e, SlackApiError) and e.response.data['error'] == 'not_in_channel':
+            handle_forminder_not_in_channel(schedule, next_event)
             return requests.post(response_url, json.dumps(
-                slack_ui_responses.text_response(":x: Failed to create schedule :x:")))
+                slack_ui_responses.text_response(f":warning: Schedule was created, but Forminder must be part of "
+                                                 f"{schedule.send_to} for the schedule to work.\n"
+                                                 f":warning: Please invite Forminder to {schedule.send_to}.")))
         else:
+            logging.exception(f"Error in schedule_slack_message: {schedule=}, {next_event=}")
+            next_event.delete()
+            schedule.delete()
             return requests.post(response_url, json.dumps(
                 slack_ui_responses.text_response(":x: Failed to create schedule :x:")))
 
     next_event.scheduled_message_id = scheduled_message_id
     next_event.save()
 
-    send_to_description = schedule.send_to if schedule.send_to != 'me' else 'you'
     result = slack_ui_responses.text_response(f":clock3: Schedule was created :clock3:\n"
-                                              f"Forminder will remind {send_to_description} to fill '{form.name}' "
+                                              f"Forminder will remind {schedule.send_to_name()} to fill '{form.name}' "
                                               f"on {schedule.schedule_description()}")
     requests.post(response_url, json.dumps(result))
 

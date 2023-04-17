@@ -6,6 +6,7 @@ import pytz as pytz
 from mongoengine import Document, StringField, ListField, ReferenceField, DateTimeField, EmbeddedDocument, \
     EmbeddedDocumentField, IntField
 
+from src.slack_api.slack_user import SlackUser
 from src.utils import DAYS_OF_THE_WEEK
 
 
@@ -104,6 +105,12 @@ class FormSchedule(Document):
     def schedule_description(self):
         weekdays = ', '.join([DAYS_OF_THE_WEEK[weekday] for weekday in self.days_of_the_week])
         return f"{weekdays} at {str(self.time_local.hour).zfill(2)}:{str(self.time_local.minute).zfill(2)} ({self.timezone})"
+
+
+    def send_to_name(self):
+        if self.send_to.startswith('#'):
+            return self.send_to
+        return '@' + SlackUser(self.send_to).username
 
 
 class ScheduledEvent(Document):

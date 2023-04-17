@@ -3,10 +3,11 @@ import logging
 import time
 
 from dotenv import load_dotenv
+from slack_sdk.errors import SlackApiError
 
 from src.models.connect import connect_to_mongo
 from src.models.schedule import FormSchedule, ScheduledEvent
-from src.services.slack_scheduler_service import schedule_slack_message
+from src.services.slack_scheduler_service import schedule_slack_message, handle_forminder_not_in_channel
 from src.slack_api.slack_client import get_slack_client
 
 logging.getLogger().setLevel(logging.INFO)
@@ -21,10 +22,17 @@ def schedule_future_messages():
     logging.info("Scheduling slack messages...")
     for schedule in FormSchedule.objects.all():
         for event in schedule.get_events_to_schedule(days=7):
-            slack_message_id = schedule_slack_message(schedule, event)
-            event.slack_message_id = slack_message_id
-            event.save()
-            logging.info(f"scheduled slack message for {event.execution_time_utc}")
+            try:
+                slack_message_id = schedule_slack_message(schedule, event)
+                event.slack_message_id = slack_message_id
+                event.save()
+                logging.info(f"scheduled slack message for {event.execution_time_utc}")
+            except SlackApiError as e:
+                if e.response.data['error'] == 'not_in_channel':
+                    handle_forminder_not_in_channel(schedule, event)
+                else:
+                    raise e
+
     logging.info(f"Done scheduling slack messages, it took {time.perf_counter() - st}")
 
 
