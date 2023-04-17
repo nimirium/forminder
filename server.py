@@ -219,6 +219,19 @@ def slack_interactive_endpoint():
             total_forms = SlackForm.objects(team_id=user.team_id).count()
             last_page = math.ceil(total_forms / constants.FORM_ITEMS_PER_PAGE)
             result = forms_service.list_forms_command(user, response_url, last_page)
+        elif action_id == "fill_forms_previous_page":
+            new_page = int(value) - 1
+            result = forms_service.fill_form_command(user, [], response_url, page=new_page)
+        elif action_id == "fill_forms_next_page":
+            new_page = int(value) + 1
+            result = forms_service.fill_form_command(user, [], response_url, page=new_page)
+        elif action_id == "fill_forms_first_page":
+            result = forms_service.fill_form_command(user, [], response_url, page=1)
+        elif action_id == "fill_forms_last_page":
+            total_forms = SlackForm.objects.filter(team_id=user.team_id).count()
+            items_per_page = 5
+            last_page = math.ceil(total_forms / items_per_page)
+            result = forms_service.fill_form_command(user, [], response_url, page=last_page)
 
     if result:
         return Response(response=json.dumps(result), status=200, mimetype="application/json")

@@ -142,16 +142,16 @@ def send_fill_now_response(form_id, response_url):
     requests.post(response_url, json.dumps(result))
 
 
-def fill_form_command(user: SlackUser, command_args: List[str], response_url):
+def fill_form_command(user: SlackUser, command_args: List[str], response_url, page: int = 1):
     form_name = ' '.join(command_args)
-    Thread(target=send_fill_form_response, kwargs=dict(user=user, form_name=form_name, response_url=response_url)).start()
+    Thread(target=send_fill_form_response, kwargs=dict(user=user, form_name=form_name, response_url=response_url, page=page)).start()
 
 
-def send_fill_form_response(user: SlackUser, form_name, response_url):
+def send_fill_form_response(user: SlackUser, form_name, response_url, page: int = 1):
     if not form_name:
         logging.info(f"[{user.username}] from [{user.team_id}] - fill form, returning a list of forms to fill")
         all_forms = SlackForm.objects.filter(team_id=user.team_id)
-        result = slack_ui.blocks.select_form_to_fill(all_forms)
+        result = slack_ui.blocks.select_form_to_fill(all_forms, page=page)
     else:
         logging.info(f"[{user.username}] from [{user.team_id}] - fill form {form_name}")
         form = SlackForm.objects.filter(name__iexact=form_name, team_id=user.team_id).first()

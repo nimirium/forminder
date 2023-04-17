@@ -223,20 +223,30 @@ def form_slack_ui_blocks(form, action_id):
     return blocks
 
 
-def select_form_to_fill(forms, title="*Select a form to fill*"):
+def select_form_to_fill(forms, title="*Select a form to fill*", page: int = 1):
+    start = (page - 1) * constants.FORM_ITEMS_PER_PAGE
+    end = start + constants.FORM_ITEMS_PER_PAGE
+    paginated_forms = forms[start:end]
+
     blocks = [
         text_block_item(title),
     ]
-    for i, form in enumerate(forms):
+    for i, form in enumerate(paginated_forms):
         fields_description = ', '.join([f"{f.title} ({f.type})" for f in form.fields])
         blocks.extend([
             text_block_item(f":page_with_curl: {form.name}"),
             text_block_item(f"Fields: {fields_description}"),
             button_block("Fill now", str(form.id), constants.FILL_FORM_NOW),
         ])
-        if i < len(forms) - 1:
-            blocks.append(divider_block)
-    return {"blocks":  blocks}
+        blocks.append(divider_block)
+    total_forms = len(forms)
+    total_pages = math.ceil(total_forms / constants.FORM_ITEMS_PER_PAGE)
+    blocks.append(text_block_item(f"Page {page} out of {total_pages}"))
+    pagination_block = pagination_buttons_block(page, total_forms, constants.FORM_ITEMS_PER_PAGE)
+    if pagination_block:
+        blocks.append(pagination_block)
+
+    return {"blocks": blocks}
 
 
 def pagination_buttons_block(current_page: int, total_items: int, items_per_page: int):
