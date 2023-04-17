@@ -39,7 +39,7 @@ def list_of_forms_blocks(user: SlackUser, page: int = 1):
         blocks.append(divider_block)
     total_pages = math.ceil(total_forms / FORM_ITEMS_PER_PAGE)
     blocks.append(text_block_item(f"Page {page} out of {total_pages}"))
-    pagination_block = pagination_buttons_block(page, total_forms, FORM_ITEMS_PER_PAGE)
+    pagination_block = pagination_buttons_block(page, total_forms, FORM_ITEMS_PER_PAGE, command='list')
     if pagination_block:
         blocks.append(pagination_block)
     return blocks

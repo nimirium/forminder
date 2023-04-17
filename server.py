@@ -8,7 +8,6 @@ import shlex
 from datetime import datetime, timedelta
 
 import bson
-import math
 import openpyxl
 import requests
 from flask import Flask, request, Response, render_template, session, redirect, url_for, make_response, send_file
@@ -20,12 +19,13 @@ from pymongo import MongoClient
 from slack_sdk.signature import SignatureVerifier
 
 from src import constants
-from src.services import submissions_service, forms_service, schedule_management_service
 from src.constants import SLASH_COMMAND
 from src.models.connect import connect_to_mongo
 from src.models.form import Submission, SlackForm
 from src.server_settings import MONGO_DB_URL, CustomRequest, SESSION_COOKIE_NAME, MONGO_DB_NAME, SLACK_CLIENT_ID, \
     SLACK_CLIENT_SECRET, SLACK_OAUTH_URL, SLACK_USER_INFO_URL, DOMAIN
+from src.services import submissions_service, forms_service, schedule_management_service
+from src.services.pagination_service import handle_pagination
 from src.slack_api.slack_user import SlackUser
 from src.slack_ui import responses as slack_ui_responses
 
@@ -207,31 +207,12 @@ def slack_interactive_endpoint():
             result = submissions_service.submit_scheduled_form(value, user, payload, response_url)
         elif action_id == constants.SUBMIT_FORM_NOW:
             result = submissions_service.submit_form_now(value, user, payload, response_url)
-        elif action_id == constants.LIST_FORMS_PREVIOUS_PAGE:
-            current_page = int(action['block_id'].split(':')[-1])  # Extract the current page from the block_id
-            result = forms_service.list_forms_command(user, response_url, current_page - 1)
-        elif action_id == constants.LIST_FORMS_NEXT_PAGE:
-            current_page = int(action['block_id'].split(':')[-1])  # Extract the current page from the block_id
-            result = forms_service.list_forms_command(user, response_url, current_page + 1)
-        elif action_id == constants.LIST_FORMS_FIRST_PAGE:
-            result = forms_service.list_forms_command(user, response_url, 1)
-        elif action_id == constants.LIST_FORMS_LAST_PAGE:
-            total_forms = SlackForm.objects(team_id=user.team_id).count()
-            last_page = math.ceil(total_forms / constants.FORM_ITEMS_PER_PAGE)
-            result = forms_service.list_forms_command(user, response_url, last_page)
-        elif action_id == "fill_forms_previous_page":
-            new_page = int(value) - 1
-            result = forms_service.fill_form_command(user, [], response_url, page=new_page)
-        elif action_id == "fill_forms_next_page":
-            new_page = int(value) + 1
-            result = forms_service.fill_form_command(user, [], response_url, page=new_page)
-        elif action_id == "fill_forms_first_page":
-            result = forms_service.fill_form_command(user, [], response_url, page=1)
-        elif action_id == "fill_forms_last_page":
-            total_forms = SlackForm.objects.filter(team_id=user.team_id).count()
-            items_per_page = 5
-            last_page = math.ceil(total_forms / items_per_page)
-            result = forms_service.fill_form_command(user, [], response_url, page=last_page)
+
+        elif action_id.startswith(constants.LIST_FORMS_PREFIX) or action_id.startswith(constants.FILL_FORMS_PREFIX):
+            prefix = constants.LIST_FORMS_PREFIX if action_id.startswith(constants.LIST_FORMS_PREFIX) else constants.FILL_FORMS_PREFIX
+            page_button = action_id[len(prefix):]
+            current_page = int(action['block_id'].split(':')[-1])
+            result = handle_pagination(prefix, page_button, user, response_url, current_page)
 
     if result:
         return Response(response=json.dumps(result), status=200, mimetype="application/json")

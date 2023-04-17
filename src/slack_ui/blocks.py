@@ -242,14 +242,14 @@ def select_form_to_fill(forms, title="*Select a form to fill*", page: int = 1):
     total_forms = len(forms)
     total_pages = math.ceil(total_forms / constants.FORM_ITEMS_PER_PAGE)
     blocks.append(text_block_item(f"Page {page} out of {total_pages}"))
-    pagination_block = pagination_buttons_block(page, total_forms, constants.FORM_ITEMS_PER_PAGE)
+    pagination_block = pagination_buttons_block(page, total_forms, constants.FORM_ITEMS_PER_PAGE, command='fill')
     if pagination_block:
         blocks.append(pagination_block)
 
     return {"blocks": blocks}
 
 
-def pagination_buttons_block(current_page: int, total_items: int, items_per_page: int):
+def pagination_buttons_block(current_page: int, total_items: int, items_per_page: int, command: str = 'list'):
     total_pages = math.ceil(total_items / items_per_page)
     previous_visible = current_page > 1
     next_visible = current_page < total_pages
@@ -257,37 +257,21 @@ def pagination_buttons_block(current_page: int, total_items: int, items_per_page
     last_page_visible = current_page < total_pages
     buttons = []
 
+    action_prefix = constants.LIST_FORMS_PREFIX
+    if command == 'fill':
+        action_prefix = constants.FILL_FORMS_PREFIX
+
     if first_page_visible:
-        buttons.append({
-            "type": "button",
-            "text": {"type": "plain_text", "text": "First page", "emoji": True},
-            "value": f"first_page",
-            "action_id": constants.LIST_FORMS_FIRST_PAGE,
-        })
+        buttons.append(button_element("First page", constants.FIRST_PAGE, f"{action_prefix}{constants.FIRST_PAGE}"))
 
     if previous_visible:
-        buttons.append({
-            "type": "button",
-            "text": {"type": "plain_text", "text": "Previous page", "emoji": True},
-            "value": "prev_page",
-            "action_id": constants.LIST_FORMS_PREVIOUS_PAGE,
-        })
+        buttons.append(button_element("Previous page", constants.PREVIOUS_PAGE, f"{action_prefix}{constants.PREVIOUS_PAGE}"))
 
     if next_visible:
-        buttons.append({
-            "type": "button",
-            "text": {"type": "plain_text", "text": "Next page", "emoji": True},
-            "value": "next_page",
-            "action_id": constants.LIST_FORMS_NEXT_PAGE,
-        })
+        buttons.append(button_element("Next page", constants.NEXT_PAGE, f"{action_prefix}{constants.NEXT_PAGE}"))
 
     if last_page_visible:
-        buttons.append({
-            "type": "button",
-            "text": {"type": "plain_text", "text": "Last page", "emoji": True},
-            "value": f"last_page",
-            "action_id": constants.LIST_FORMS_LAST_PAGE,
-        })
+        buttons.append(button_element("Last page", constants.LAST_PAGE, f"{action_prefix}{constants.LAST_PAGE}"))
 
     if not buttons:
         return None
