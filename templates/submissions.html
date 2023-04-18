@@ -93,8 +93,8 @@
 
 {% block scripts_bottom %}
 <script>
-    const exportCsvUrl = "{{ url_for('export_submissions_csv', formId=form_id) }}";
-    const exportXlsxUrl = "{{ url_for('export_submissions_xlsx', formId=form_id) }}";
+    const exportCsvUrl = "{{ url_for('views_v1.export_submissions_csv', formId=form_id) }}";
+    const exportXlsxUrl = "{{ url_for('views_v1.export_submissions_xlsx', formId=form_id) }}";
 
     document.getElementById("download-btn").addEventListener("click", function() {
         let exportType = document.getElementById("export").value;
