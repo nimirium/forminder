@@ -2,7 +2,7 @@ import logging
 import os
 from datetime import datetime, timedelta
 
-from flask import Flask, request, render_template, session, redirect, make_response
+from flask import Flask, request, render_template, session, redirect, make_response, send_from_directory
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from flask_session import Session
@@ -11,8 +11,7 @@ from pymongo import MongoClient
 from src.constants import SLASH_COMMAND
 from src.models.connect import connect_to_mongo
 from src.models.form import SlackForm, Submission
-from src.server_settings import MONGO_DB_URL, CustomRequest, SESSION_COOKIE_NAME, MONGO_DB_NAME, SLACK_CLIENT_ID, \
-    DOMAIN
+from src.server_settings import MONGO_DB_URL, CustomRequest, SESSION_COOKIE_NAME, MONGO_DB_NAME
 from views.view_utils import user_logged_in, form_visible_to_user
 from views.views_v1 import urls_v1
 
@@ -47,12 +46,12 @@ def user_is_logged_in():
     return 'access_token' in session and 'user_data' in session
 
 
-@app.route('/')
-def index():
-    if user_is_logged_in():
-        return redirect('/forms')
-    redirect_path = request.args.get('redirect_path', 'forms')
-    return render_template('sign-in.html', SLACK_CLIENT_ID=SLACK_CLIENT_ID, redirect_url=f'{DOMAIN}/{redirect_path}')
+# @app.route('/')
+# def index():
+#     if user_is_logged_in():
+#         return redirect('/forms')
+#     redirect_path = request.args.get('redirect_path', 'forms')
+#     return render_template('sign-in.html', SLACK_CLIENT_ID=SLACK_CLIENT_ID, redirect_url=f'{DOMAIN}/{redirect_path}')
 
 
 @app.route('/forms', methods=['GET'])
@@ -114,3 +113,13 @@ def health_view():
 
 
 app.register_blueprint(urls_v1, url_prefix='/api/v1')
+
+
+# Serve the frontend files
+@app.route('/', defaults={'path': ''})
+@app.route('/<path:path>')
+def catch_all(path):
+    if path and os.path.exists('ui/dist/' + path):
+        return send_from_directory('ui/dist', path)
+    else:
+        return send_from_directory('ui/dist', 'index.html')
