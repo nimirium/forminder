@@ -3,6 +3,7 @@ import HomeView from '../views/HomeView.vue'
 import LoginView from '../views/LoginView.vue'
 import AddToSlackView from '../views/AddToSlackView.vue'
 import HowToUseView from "../views/HowToUseView.vue";
+import UseCasesView from "../views/UseCasesView.vue";
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -27,21 +28,11 @@ const router = createRouter({
       name: 'how-to-use',
       component: HowToUseView
     },
-    // {
-    //   path: '/how-to-use',
-    //   name: 'how-to-use',
-    //   component: HowToUseView
-    // },
-    // {
-    //   path: '/use-cases',
-    //   name: 'use-cases',
-    //   component: UseCasesView
-    // },
-    // {
-    //   path: '/use-cases',
-    //   name: 'use-cases',
-    //   component: UseCasesView
-    // },
+    {
+      path: '/use-cases',
+      name: 'use-cases',
+      component: UseCasesView
+    },
     {
       path: '/about',
       name: 'about',

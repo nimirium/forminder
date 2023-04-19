@@ -1,6 +1,6 @@
 <template>
   <div class="flex py-4 items-center">
-    <div class="max-w-xs md:max-w-md">
+    <div class="max-w-xs md:max-w-md mr-2.5">
       {{ text }}
     </div>
     <CodeBlock :code="code"></CodeBlock>

@@ -39,7 +39,6 @@ export default {
   background: #F6F6F6;
   box-shadow: 0 4px 4px rgba(0, 0, 0, 0.25);
   border-radius: 15px;
-  margin-left: 10px;
 }
 
 .mycode-text {
