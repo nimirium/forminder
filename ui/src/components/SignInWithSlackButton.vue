@@ -1,5 +1,5 @@
 <template>
-  <a :href="slackAuthUrl" class="slack-button m-5">
+  <a :href="slackAuthUrl" class="slack-button my-5">
     <img src="https://platform.slack-edge.com/img/sign_in_with_slack.png" alt="Sign in with Slack" />
   </a>
 </template>
@@ -10,7 +10,7 @@ import { useRoute } from 'vue-router';
 const route = useRoute();
 
 export default {
-  name: 'SignInWithSlack',
+  name: 'SignInWithSlackButton',
   data() {
     const clientId = import.meta.env.VITE_SLACK_CLIENT_ID;
     const redirectUrl = route?.query?.redirectUrl || `${import.meta.env.VITE_DOMAIN}/forms`;
@@ -24,4 +24,9 @@ export default {
 };
 </script>
 
-<style scoped></style>
+<style scoped>
+.slack-button img {
+  width: 100%;
+  max-width: 200px;
+}
+</style>

@@ -1,6 +1,4 @@
 <script setup lang="ts">
-import { RouterLink, RouterView } from 'vue-router'
-import HelloWorld from './components/HelloWorld.vue'
 </script>
 
 <template>
@@ -24,11 +22,11 @@ import HelloWorld from './components/HelloWorld.vue'
     </div>
 
 
-    <div class="flex-grow">
+    <div class="flex-grow mx-2">
       <RouterView/>
     </div>
 
-    <div class="py-3">
+    <div class="py-3 mt-10">
       <footer>
 
         <nav>

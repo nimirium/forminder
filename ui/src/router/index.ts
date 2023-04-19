@@ -1,6 +1,8 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '../views/HomeView.vue'
 import LoginView from '../views/LoginView.vue'
+import AddToSlackView from '../views/AddToSlackView.vue'
+import HowToUseView from "../views/HowToUseView.vue";
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -15,16 +17,16 @@ const router = createRouter({
       name: 'login',
       component: LoginView
     },
-    // {
-    //   path: '/add-to-slack',
-    //   name: 'add-to-slack',
-    //   component: AddToSlackView
-    // },
-    // {
-    //   path: '/how-to-use',
-    //   name: 'how-to-use',
-    //   component: HowToUseView
-    // },
+    {
+      path: '/add-to-slack',
+      name: 'add-to-slack',
+      component: AddToSlackView
+    },
+    {
+      path: '/how-to-use',
+      name: 'how-to-use',
+      component: HowToUseView
+    },
     // {
     //   path: '/how-to-use',
     //   name: 'how-to-use',

@@ -1,18 +1,19 @@
 <script setup lang="ts">
-import SignInWithSlackButton from "@/components/SignInWithSlackButton.vue";
-import MainContent from "@/components/MainContent.vue";
 import WelcomeToForminder from "@/components/WelcomeToForminder.vue";
+import AddToSlackButton from "@/components/AddToSlackButton.vue";
+import MainContent from "@/components/MainContent.vue";
 </script>
 
 <template>
+
   <main>
     <MainContent>
       <template #default>
         <WelcomeToForminder/>
         <div class="max-w-xs md:max-w-md py-8">
-          Log in to view your team's forms and submissions.
+          Get started by adding Forminder to your Slack workspace
         </div>
-        <SignInWithSlackButton/>
+        <AddToSlackButton/>
       </template>
     </MainContent>
   </main>
