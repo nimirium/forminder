@@ -2,9 +2,13 @@
   <div class="mycode-box">
     <div class="mycode-text">
       <span>
-         {{ code }}
+        {{ code }}
       </span>
-      <font-awesome-icon :icon="['fa', 'copy']" class="pl-2 hover:cursor-pointer" />
+      <font-awesome-icon
+          :icon="['fa', 'copy']"
+          class="pl-2 hover:cursor-pointer"
+          @click="copyToClipboard"
+      />
     </div>
   </div>
 </template>
@@ -17,8 +21,17 @@ export default {
       type: String,
       required: true,
     },
-  }
-}
+  },
+  methods: {
+    async copyToClipboard() {
+      try {
+        await navigator.clipboard.writeText(this.code);
+      } catch (err) {
+        console.error("Failed to copy code: ", err);
+      }
+    },
+  },
+};
 </script>
 
 <style scoped>
