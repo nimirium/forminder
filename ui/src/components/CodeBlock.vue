@@ -1,9 +1,11 @@
 <template>
   <div class="mycode-box">
     <div class="mycode-text">
-      <span>
-        {{ code }}
-      </span>
+      <div class="mycode-content-wrapper">
+        <span class="mycode-content">
+          {{ code }}
+        </span>
+      </div>
       <font-awesome-icon
           :icon="['fa', 'copy']"
           class="pl-2 hover:cursor-pointer"
@@ -39,6 +41,7 @@ export default {
   background: #F6F6F6;
   box-shadow: 0 4px 4px rgba(0, 0, 0, 0.25);
   border-radius: 15px;
+  overflow: hidden;
 }
 
 .mycode-text {
@@ -46,5 +49,24 @@ export default {
   font-weight: 400;
   color: #2E2E2E;
   padding: 10px;
+  display: flex;
+  align-items: center;
+}
+
+.mycode-content-wrapper {
+  overflow-x: auto;
+  white-space: nowrap;
+  flex-grow: 1;
+  scrollbar-width: none; /* For Firefox */
+}
+
+.mycode-content-wrapper::-webkit-scrollbar {
+  display: none; /* For WebKit browsers (e.g., Chrome, Safari) */
+}
+
+.mycode-content {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 </style>

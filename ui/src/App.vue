@@ -15,6 +15,7 @@
             <RouterLink to="/add-to-slack" class="px-3 md:px-5 py-3 hidden md:block">Add to Slack</RouterLink>
             <RouterLink to="/how-to-use" class="px-3 md:px-5 py-3 hidden md:block">How to use</RouterLink>
             <RouterLink to="/use-cases" class="px-3 md:px-5 py-3 hidden md:block">Use cases</RouterLink>
+            <RouterLink to="/about" class="px-3 md:px-5 py-3 hidden md:block">About</RouterLink>
           </div>
 
         </nav>
@@ -32,9 +33,10 @@
         <nav>
 
           <div class="flex justify-center items-center flex-col md:flex-row">
+            <RouterLink to="/add-to-slack" class="px-3 md:px-5 py-1 md:py-3 md:hidden">Add to Slack</RouterLink>
             <RouterLink to="/how-to-use" class="px-3 md:px-5 py-1 md:py-3 md:hidden">How to use</RouterLink>
             <RouterLink to="/use-cases" class="px-3 md:px-5 py-1 md:py-3 md:hidden">Use cases</RouterLink>
-            <RouterLink to="/about" class="px-3 md:px-5 py-1 md:py-3">About</RouterLink>
+            <RouterLink to="/about" class="px-3 md:px-5 py-1 md:py-3 md:hidden">About</RouterLink>
             <RouterLink to="/terms-and-conditions" class="px-3 md:px-5 py-1 md:py-3">Terms and Conditions</RouterLink>
           </div>
 
