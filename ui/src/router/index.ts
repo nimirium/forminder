@@ -4,6 +4,7 @@ import LoginView from '../views/LoginView.vue'
 import AddToSlackView from '../views/AddToSlackView.vue'
 import HowToUseView from "../views/HowToUseView.vue";
 import UseCasesView from "../views/UseCasesView.vue";
+import AboutView from "../views/AboutView.vue";
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -36,12 +37,17 @@ const router = createRouter({
     {
       path: '/about',
       name: 'about',
-      component: () => import('../views/AboutView.vue')
+      component: AboutView
     },
     {
       path: '/terms-and-conditions',
       name: 'terms-and-conditions',
       component: () => import('../views/TermsAndConditionsView.vue')
+    },
+    {
+      path: '/after-add-to-slack',
+      name: 'after-add-to-slack',
+      component: () => import('../views/AfterAddToSlack.vue')
     },
   ]
 })

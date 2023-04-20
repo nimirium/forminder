@@ -1,9 +1,14 @@
 # run mongo
 mongod --config /usr/local/etc/mongod.conf --fork
+# run worker in the background
+python scheduling_worker.py >> scheduling_worker.log 2>&1 &
+# build ui
+cd ui
+npm run build
+cd ..
 # run server
 export FLASK_APP=server
 export MONGO_DB_NAME=dev
-python scheduling_worker.py >> scheduling_worker.log 2>&1 &
 flask run
 
 # see if mongo is runnung:
