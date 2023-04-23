@@ -2,7 +2,7 @@ import logging
 import os
 from datetime import datetime, timedelta
 
-from flask import Flask, request, render_template, session, redirect, make_response, send_from_directory
+from flask import Flask, request, render_template, session, redirect, make_response, send_from_directory, url_for
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from flask_session import Session
@@ -20,7 +20,7 @@ logging.basicConfig(format='%(asctime)s - %(levelname)s - %(message)s', level=lo
 connect_to_mongo()
 pymongo_client = MongoClient(MONGO_DB_URL)
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder='ui/dist')
 app.request_class = CustomRequest
 
 app.config['SECRET_KEY'] = os.environ['SESSION_KEY']  # Replace with your secret key
@@ -119,7 +119,8 @@ app.register_blueprint(urls_v1, url_prefix='/api/v1')
 @app.route('/', defaults={'path': ''})
 @app.route('/<path:path>')
 def catch_all(path):
-    if path and os.path.exists('ui/dist/' + path):
-        return send_from_directory('ui/dist', path)
+    full_path = os.path.join(app.static_folder, path)
+    if path and os.path.exists(full_path):
+        return redirect(url_for('static', filename=path))
     else:
-        return send_from_directory('ui/dist', 'index.html')
+        return send_from_directory(app.static_folder, 'index.html')
