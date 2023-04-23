@@ -10,3 +10,12 @@ class SlackUser:
         self.team_id = user_info['team_id']
         self.is_admin = user_info['is_admin']
         self.tz = user_info['tz']
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'username': self.username,
+            'real_name': self.real_name,
+            'team_id': self.team_id,
+            'tz': self.tz,
+        }

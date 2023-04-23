@@ -1,8 +1,10 @@
+import json
 import os
 
 import bson
 import requests
 from flask import request, Response, session, redirect, url_for, make_response, send_from_directory
+from jinja2 import Environment, FileSystemLoader
 from slack_sdk.signature import SignatureVerifier
 
 from src.models.form import SlackForm
@@ -85,4 +87,9 @@ def serve_ui(path: str):
     if path and os.path.exists('ui/dist/' + path):
         return send_from_directory('ui/dist', path)
     else:
+        if hasattr(request, 'user') and request.user:
+            user = request.user.to_dict()
+            response = make_response(send_from_directory('ui/dist', 'index.html'))
+            response.headers['X-User'] = json.dumps(user)
+            return response
         return send_from_directory('ui/dist', 'index.html')

@@ -1,27 +1,12 @@
 <script setup lang="ts">
-function removeURLParameter(url: string, parameter: string): string {
-  const urlparts = url.split('?');
-  if (urlparts.length >= 2) {
+import {removeCodeUrlParameter} from "@/util/remove-url-parameter";
+import {useRoute} from "vue-router";
+import {computed} from "vue";
 
-    const prefix = encodeURIComponent(parameter) + '=';
-    const pars = urlparts[1].split(/[&;]/g);
+removeCodeUrlParameter();
 
-    for (let i = pars.length; i-- > 0;) {
-      if (pars[i].lastIndexOf(prefix, 0) !== -1) {
-        pars.splice(i, 1);
-      }
-    }
-
-    return urlparts[0] + (pars.length > 0 ? '?' + pars.join('&') : '');
-  }
-  return url;
-}
-
-if (window.history.pushState) {
-  let newUrl = removeURLParameter(window.location.href, 'code');
-  newUrl = removeURLParameter(newUrl, 'state');
-  window.history.pushState({}, '', newUrl);
-}
+const route = useRoute();
+const afterLogin = computed(() => ['/forms', '/submissions'].includes(route.path));
 </script>
 
 <template>
@@ -32,7 +17,9 @@ if (window.history.pushState) {
         <nav>
           <div class="flex justify-center items-center">
             <RouterLink to="/" class="px-3 md:px-5 py-3">Home</RouterLink>
-            <RouterLink to="/login" class="px-3 md:px-5 py-3">Log in</RouterLink>
+            <RouterLink to="/forms" v-if="afterLogin" class="px-3 md:px-5 py-3">Forms</RouterLink>
+            <RouterLink to="/submissions" v-if="afterLogin" class="px-3 md:px-5 py-3">Submissions</RouterLink>
+            <RouterLink to="/login" v-if="!afterLogin" class="px-3 md:px-5 py-3">Log in</RouterLink>
             <RouterLink to="/add-to-slack" class="px-3 md:px-5 py-3 hidden md:block">Add to Slack</RouterLink>
             <RouterLink to="/how-to-use" class="px-3 md:px-5 py-3 hidden md:block">How to use</RouterLink>
             <RouterLink to="/use-cases" class="px-3 md:px-5 py-3 hidden md:block">Use cases</RouterLink>
