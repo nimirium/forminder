@@ -120,6 +120,6 @@ app.register_blueprint(urls_v1, url_prefix='/api/v1')
 @app.route('/<path:path>')
 def catch_all(path):
     if path and os.path.exists('ui/dist/' + path):
-        return app.send_static_file(path)
+        return send_from_directory('ui/dist', path)
     else:
         return send_from_directory('ui/dist', 'index.html')
