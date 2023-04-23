@@ -120,8 +120,6 @@ app.register_blueprint(urls_v1, url_prefix='/api/v1')
 @app.route('/<path:path>')
 def catch_all(path):
     if path and os.path.exists('ui/dist/' + path):
-        if path.endswith('.js'):
-            return send_from_directory('ui/dist', path, mimetype='application/javascript')
-        return send_from_directory('ui/dist', path)
+        return app.send_static_file(path)
     else:
         return send_from_directory('ui/dist', 'index.html')
