@@ -2,17 +2,16 @@ import logging
 import os
 from datetime import datetime, timedelta
 
-from flask import Flask, request, render_template, session, redirect, make_response, send_from_directory
+from flask import Flask, request, session, redirect, make_response, send_from_directory
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from flask_session import Session
 from pymongo import MongoClient
 
-from src.constants import SLASH_COMMAND
 from src.models.connect import connect_to_mongo
-from src.models.form import SlackForm, Submission
+from src.models.form import SlackForm
 from src.server_settings import MONGO_DB_URL, CustomRequest, SESSION_COOKIE_NAME, MONGO_DB_NAME
-from views.view_utils import user_logged_in, form_visible_to_user
+from views.view_utils import user_logged_in, serve_ui
 from views.views_v1 import urls_v1
 
 logging.basicConfig(format='%(asctime)s - %(levelname)s - %(message)s', level=logging.INFO)
@@ -46,45 +45,6 @@ def user_is_logged_in():
     return 'access_token' in session and 'user_data' in session
 
 
-# @app.route('/')
-# def index():
-#     if user_is_logged_in():
-#         return redirect('/forms')
-#     redirect_path = request.args.get('redirect_path', 'forms')
-#     return render_template('sign-in.html', SLACK_CLIENT_ID=SLACK_CLIENT_ID, redirect_url=f'{DOMAIN}/{redirect_path}')
-
-
-@app.route('/forms', methods=['GET'])
-@user_logged_in
-def forms_view():
-    page = int(request.args.get('page', 1))
-    per_page = min(int(request.args.get('per_page', 10)), 100)
-    team_id = session['user_data']['team_id']
-    total = SlackForm.objects(team_id=team_id).count()
-    page_forms = SlackForm.objects(team_id=team_id).skip((page - 1) * per_page).limit(per_page)
-    return render_template('forms.html', forms=page_forms, page=page, per_page=per_page,
-                           total=total, SLASH_COMMAND=SLASH_COMMAND, navs=[dict(title='All Forms')])
-
-
-@app.route('/submissions', methods=['GET'])
-@user_logged_in
-@form_visible_to_user
-def submissions_view():
-    # noinspection PyTypeHints
-    request.slack_form: SlackForm
-    form_id = str(request.slack_form.id)
-    form = request.slack_form
-    page = int(request.args.get('page', 1))
-    per_page = min(int(request.args.get('per_page', 10)), 100)
-
-    total = Submission.objects.filter(form_id=form_id).count()
-    page_submissions = Submission.objects.filter(form_id=form_id).skip((page - 1) * per_page).limit(per_page)
-
-    return render_template('submissions.html', form_id=form_id, submissions=page_submissions, page=page,
-                           per_page=per_page, total=total, SLASH_COMMAND=SLASH_COMMAND,
-                           navs=[dict(title='All Forms', path='/forms'), dict(title=form.name)])
-
-
 @app.route("/logout")
 @user_logged_in
 def logout():
@@ -115,17 +75,20 @@ def health_view():
 app.register_blueprint(urls_v1, url_prefix='/api/v1')
 
 
+@app.route('/forms', methods=['GET'])
+@user_logged_in
+def forms_ui():
+    return serve_ui('forms')
+
+
+@app.route('/submissions', methods=['GET'])
+@user_logged_in
+def submissions_ui():
+    return serve_ui('submissions')
+
+
 # Serve the frontend files
 @app.route('/', defaults={'path': ''})
 @app.route('/<path:path>')
 def catch_all(path):
-    logging.info(f"catch_all got {path=}")
-    if path and os.path.exists('ui/dist/' + path):
-        logging.info(f"{path=} in ui/dist/")
-        return send_from_directory('ui/dist', path)
-    if path and os.path.exists('app/ui/dist/' + path):
-        logging.info(f"{path=} in app/ui/dist/")
-        return send_from_directory('app/ui/dist', path)
-    else:
-        logging.info(f"{path=} NOT in ui/dist/ serving index.html")
-        return send_from_directory('ui/dist', 'index.html')
+    return serve_ui(path)

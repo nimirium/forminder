@@ -49,6 +49,11 @@ const router = createRouter({
       name: 'after-add-to-slack',
       component: () => import('../views/AfterAddToSlack.vue')
     },
+    {
+      path: '/forms',
+      name: 'forms',
+      component: () => import('../views/FormsView.vue')
+    },
   ]
 })
 

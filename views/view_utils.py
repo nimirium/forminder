@@ -2,7 +2,7 @@ import os
 
 import bson
 import requests
-from flask import request, Response, session, redirect, url_for, make_response
+from flask import request, Response, session, redirect, url_for, make_response, send_from_directory
 from slack_sdk.signature import SignatureVerifier
 
 from src.models.form import SlackForm
@@ -36,7 +36,7 @@ def user_logged_in(func, *args, **kwargs):
             response_data = response.json()
 
             if 'access_token' not in response_data:
-                return redirect(url_for('index', redirect_url=request.url))
+                return redirect(url_for('catch_all', path='login'))
 
             # Fetch user information
             auth_token = response_data['access_token']
@@ -49,10 +49,10 @@ def user_logged_in(func, *args, **kwargs):
                 session['access_token'] = auth_token
                 session['user_data'] = user_data['user']
             else:
-                return redirect(url_for('index', redirect_url=request.url))
+                return redirect(url_for('catch_all', path='login'))
 
         if 'access_token' not in session or 'user_data' not in session:
-            return redirect(url_for('index', redirect_url=request.url))
+            return redirect(url_for('catch_all', path='login'))
         request.user = SlackUser(user_id=session['user_data']['id'])
         return func(*args, **kwargs)
 
@@ -79,3 +79,10 @@ def form_visible_to_user(func, *args, **kwargs):
 
     wrapper.__name__ = func.__name__
     return wrapper
+
+
+def serve_ui(path: str):
+    if path and os.path.exists('ui/dist/' + path):
+        return send_from_directory('ui/dist', path)
+    else:
+        return send_from_directory('ui/dist', 'index.html')
