@@ -6,7 +6,7 @@ import {computed} from "vue";
 removeCodeUrlParameter();
 
 const route = useRoute();
-const afterLogin = computed(() => ['/forms', '/submissions'].includes(route.path));
+const afterLogin = computed(() => ['/forms', '/submissions'].includes(route?.path));
 </script>
 
 <template>

@@ -1,12 +1,14 @@
 <template>
   <div>
+    <div class="w-full text-3xl text-center p-5">
+      <span class="text-3xl">Forms</span>
+    </div>
     <div v-if="loading" class="loading-indicator">
       Loading...
     </div>
     <div v-if="!loading" class="flex flex-wrap justify-center place-content-evenly">
       <div
           v-for="form in forms"
-
           :key="form.id"
           class="mygrid-item opacity-75 p-7 rounded-xl shadow-md w-full md:w-1/3 lg:w-1/4 p-4 max-w-lg p-5 m-5"
       >

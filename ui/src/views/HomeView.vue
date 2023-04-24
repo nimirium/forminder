@@ -23,7 +23,7 @@ import {useRoute} from "vue-router";
 import {computed} from "vue";
 
 const route = useRoute();
-const afterLogin = computed(() => ['/forms', '/submissions'].includes(route.path));
+const afterLogin = computed(() => ['/forms', '/submissions'].includes(route?.path));
 
 export default {
   name: "HomeView",
