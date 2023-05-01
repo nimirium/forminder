@@ -88,7 +88,7 @@ def slack_interactive_endpoint():
 
 
 @urls_v1.route('/forms', methods=['GET'])
-# @user_logged_in
+@user_logged_in
 def forms_view():
     page = int(request.args.get('page', 1))
     per_page = min(int(request.args.get('per_page', 10)), 100)
@@ -105,8 +105,8 @@ def forms_view():
 
 
 @urls_v1.route('/submissions', methods=['GET'])
-# @user_logged_in
-# @form_visible_to_user
+@user_logged_in
+@form_visible_to_user
 def submissions_view():
     # noinspection PyTypeHints
     request.slack_form: SlackForm

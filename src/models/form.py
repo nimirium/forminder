@@ -56,6 +56,12 @@ class SubmissionField(EmbeddedDocument):
             return self.title + ':'
         return self.title
 
+    def to_dict(self):
+        return {
+            "title": self.title,
+            "value": self.value,
+        }
+
 
 class Submission(Document):
     form_id = StringField()

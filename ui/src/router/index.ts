@@ -54,6 +54,11 @@ const router = createRouter({
       name: 'forms',
       component: () => import('../views/FormsView.vue')
     },
+    {
+      path: '/submissions',
+      name: 'submissions',
+      component: () => import('../views/SubmissionsView.vue')
+    },
   ]
 })
 
