@@ -20,11 +20,11 @@ build-ui:
 	cd ui && npm run build && cd ..
 
 build-dev-ui:
-	ln -sf ui/.env_dev ui/.env
+	cp ui/.env_dev ui/.env
 	$(MAKE) build-ui
 
 build-release-ui:
-	ln -sf ui/.env_prod ui/.env
+	cp ui/.env_prod ui/.env
 	$(MAKE) build-ui
 
 clean:
