@@ -1,6 +1,6 @@
 .PHONY: all release run-mongo run-worker build-ui setup-server run-server build-dev-ui build-release-ui clean
 
-all: run-mongo run-worker build-dev-ui run-server
+all: run-worker build-dev-ui run-server
 release: build-release-ui
 
 run-mongo:
@@ -14,7 +14,7 @@ setup-server:
 	export MONGO_DB_NAME=dev
 
 run-server: setup-server
-	flask run
+	flask --app server run
 
 build-ui:
 	cd ui && npm run build && cd ..

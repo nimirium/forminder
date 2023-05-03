@@ -76,13 +76,13 @@ app.register_blueprint(urls_v1, url_prefix='/api/v1')
 
 
 @app.route('/forms', methods=['GET'])
-# @user_logged_in
+@user_logged_in
 def forms_ui():
     return serve_ui('forms')
 
 
 @app.route('/submissions', methods=['GET'])
-# @user_logged_in
+@user_logged_in
 def submissions_ui():
     return serve_ui('submissions')
 

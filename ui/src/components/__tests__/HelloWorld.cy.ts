@@ -1,12 +1,12 @@
-import HelloWorld from '../HelloWorld.vue'
+import TheWelcome from '../TheWelcome.vue'
 
-describe('HelloWorld', () => {
+describe('TheWelcome', () => {
   it('playground', () => {
-    cy.mount(HelloWorld, { props: { msg: 'Hello Cypress' } })
+    cy.mount(TheWelcome, { props: { msg: 'Welcome' } })
   })
 
   it('renders properly', () => {
-    cy.mount(HelloWorld, { props: { msg: 'Hello Cypress' } })
-    cy.get('h1').should('contain', 'Hello Cypress')
+    cy.mount(TheWelcome, { props: { msg: 'Welcome' } })
+    cy.get('h1').should('contain', 'Welcome')
   })
 })

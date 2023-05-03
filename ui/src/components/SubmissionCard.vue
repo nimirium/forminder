@@ -23,20 +23,7 @@
 <script lang="ts">
 import { defineComponent } from "vue";
 import type { PropType } from "vue";
-
-interface SubmissionField {
-  id: string;
-  display_title: string;
-  value: string;
-}
-
-interface Submission {
-  id: string;
-  user_name: string;
-  formatted_date: string;
-  formatted_time: string;
-  fields: SubmissionField[];
-}
+import type {Submission} from "@/types/submissions";
 
 export default defineComponent({
   props: {
@@ -47,4 +34,3 @@ export default defineComponent({
   },
 });
 </script>
-

@@ -26,7 +26,7 @@ def verify_slack_request(func, *args, **kwargs):
 
 def user_logged_in(func, *args, **kwargs):
     def wrapper():
-        if request.args.get('code') and 'access_token' not in session or 'user_data' not in session:
+        if request.args.get('code') and ('access_token' not in session or 'user_data' not in session):
             # OAuth2: Exchange the authorization code for an access token
             code = request.args.get('code')
             payload = {

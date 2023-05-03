@@ -83,20 +83,19 @@
 <script lang="ts">
 import { defineComponent, ref, onMounted } from "vue";
 import SubmissionCard from "@/components/SubmissionCard.vue";
-import {useRoute} from "vue-router";
+import { useRoute } from "vue-router";
+import type { Submission } from "@/types/submissions";
+
 
 export default defineComponent({
   components: {
     SubmissionCard,
   },
-  data() {
-    return {
-      slashCommand: import.meta.env.VITE_SLASH_COMMAND
-    }
-  },
   setup() {
+    const slashCommand = ref(import.meta.env.VITE_SLASH_COMMAND as string);
+
     const exportType = ref("csv");
-    const submissions = ref([]);
+    const submissions = ref<Submission[]>([]);
     const page = ref(1);
     const perPage = ref(10);
     const lastPage = ref(1);
@@ -105,15 +104,15 @@ export default defineComponent({
 
     const downloadData = () => {
       const exportUrl =
-          exportType.value === "csv"
-              ? "/export-submissions-csv"
-              : "/export-submissions-xlsx";
+        exportType.value === "csv"
+          ? "/export-submissions-csv"
+          : "/export-submissions-xlsx";
       window.location.href = exportUrl;
     };
 
     const fetchSubmissions = async () => {
       const response = await fetch(
-          `/api/v1/submissions?formId=${formId}&page=${page.value}&per_page=${perPage.value}`
+        `/api/v1/submissions?formId=${formId}&page=${page.value}&per_page=${perPage.value}`
       );
 
       if (response.ok) {
@@ -133,6 +132,7 @@ export default defineComponent({
     });
 
     return {
+      slashCommand,
       exportType,
       submissions,
       downloadData,
@@ -143,6 +143,7 @@ export default defineComponent({
   },
 });
 </script>
+
 
 <style scoped>
 body {
