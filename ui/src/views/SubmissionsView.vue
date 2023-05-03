@@ -1,5 +1,11 @@
 <!-- FormSubmissions.vue -->
 <template>
+  <div v-if="!loading" class="w-full text-3xl text-center p-5">
+    <span class="text-3xl">{{formName}} - Submissions</span>
+  </div>
+  <div v-if="loading" class="loading-indicator">
+    Loading...
+  </div>
   <div>
     <div class="flex justify-around">
       <div>
@@ -17,7 +23,7 @@
         </select>
         <button
             id="download-btn"
-            class="mybutton p-2 m-1 rounded"
+            class="bg-greenish p-2 m-1 rounded"
             @click="downloadData"
         >
           Download
@@ -58,7 +64,14 @@
     <div class="flex justify-center">
       <div class="m-3">
         <button
-            :disabled="page === 1"
+            v-if="page > 1"
+            @click="changePage(1)"
+            class="p-3"
+        >
+          First
+        </button>
+        <button
+            v-if="page > 1"
             @click="changePage(page - 1)"
             class="p-3"
         >
@@ -68,11 +81,18 @@
         Page {{ page }} of {{ lastPage }}
       </span>
         <button
-            :disabled="page === lastPage"
+            v-if="page < lastPage"
             @click="changePage(page + 1)"
             class="p-3"
         >
           Next
+        </button>
+        <button
+            v-if="page < lastPage"
+            @click="changePage(lastPage)"
+            class="p-3"
+        >
+          Last
         </button>
       </div>
     </div>
@@ -94,6 +114,7 @@ export default defineComponent({
   setup() {
     const slashCommand = ref(import.meta.env.VITE_SLASH_COMMAND as string);
 
+    const loading = ref<Boolean>(true);
     const exportType = ref("csv");
     const submissions = ref<Submission[]>([]);
     const page = ref(1);
@@ -101,6 +122,7 @@ export default defineComponent({
     const lastPage = ref(1);
     const route = useRoute();
     const formId = route.query.formId as string;
+    const formName = ref<String>();
 
     const downloadData = () => {
       const exportUrl =
@@ -115,10 +137,141 @@ export default defineComponent({
         `/api/v1/submissions?formId=${formId}&page=${page.value}&per_page=${perPage.value}`
       );
 
+      loading.value = false;
+
       if (response.ok) {
         const data = await response.json();
+        // const data = {
+        //   "form_name": "Dogs form",
+        //   "page": 1,
+        //   "per_page": 10,
+        //   "submissions": [{
+        //     "created_at": "2023-04-03T10:35:42.103000",
+        //     "fields": [{"title": "Are you bringing your dog to work tomorrow?", "value": "Yes"}, {
+        //       "title": "Dog name",
+        //       "value": "Doggie"
+        //     }, {"title": "Is your dog friendly with other dogs?", "value": "Yes"}],
+        //     "form_id": "642aabdb1ef24e18c6d95fab",
+        //     "formatted_date": "Apr. 3, 2023",
+        //     "formatted_time": "10:35",
+        //     "id": "642aabfe7af57bab8b74f38d",
+        //     "user_id": "U02RCUYKPK4",
+        //     "user_name": "sophie.fogel"
+        //   }, {
+        //     "created_at": "2023-04-17T18:54:31.048000",
+        //     "fields": [{"title": "Dog name", "value": "sfsdf"}, {
+        //       "title": "Is your dog friendly with other dogs?",
+        //       "value": "fhgfgh"
+        //     }, {"title": "Are you bringing your dog to work tomorrow?", "value": "No"}],
+        //     "form_id": "642aabdb1ef24e18c6d95fab",
+        //     "formatted_date": "Apr. 17, 2023",
+        //     "formatted_time": "18:54",
+        //     "id": "643d6bb7f02800015e0d3c44",
+        //     "user_id": "U02RCUYKPK4",
+        //     "user_name": "sophie.fogel"
+        //   }, {
+        //     "created_at": "2023-04-17T18:54:45.590000",
+        //     "fields": [{"title": "Dog name", "value": "ertert"}, {
+        //       "title": "Is your dog friendly with other dogs?",
+        //       "value": "asdasd"
+        //     }, {"title": "Are you bringing your dog to work tomorrow?", "value": "No"}],
+        //     "form_id": "642aabdb1ef24e18c6d95fab",
+        //     "formatted_date": "Apr. 17, 2023",
+        //     "formatted_time": "18:54",
+        //     "id": "643d6bc5f02800015e0d3c45",
+        //     "user_id": "U02RCUYKPK4",
+        //     "user_name": "sophie.fogel"
+        //   }, {
+        //     "created_at": "2023-04-17T18:55:18.489000",
+        //     "fields": [{"title": "Dog name", "value": "etert"}, {
+        //       "title": "Is your dog friendly with other dogs?",
+        //       "value": "fgdgd"
+        //     }, {"title": "Are you bringing your dog to work tomorrow?", "value": "Yes"}],
+        //     "form_id": "642aabdb1ef24e18c6d95fab",
+        //     "formatted_date": "Apr. 17, 2023",
+        //     "formatted_time": "18:55",
+        //     "id": "643d6be6f02800015e0d3c46",
+        //     "user_id": "U02RCUYKPK4",
+        //     "user_name": "sophie.fogel"
+        //   }, {
+        //     "created_at": "2023-04-17T18:55:31.831000",
+        //     "fields": [{"title": "Dog name", "value": "ertret"}, {
+        //       "title": "Is your dog friendly with other dogs?",
+        //       "value": "qw"
+        //     }, {"title": "Are you bringing your dog to work tomorrow?", "value": "Yes"}],
+        //     "form_id": "642aabdb1ef24e18c6d95fab",
+        //     "formatted_date": "Apr. 17, 2023",
+        //     "formatted_time": "18:55",
+        //     "id": "643d6bf3f02800015e0d3c47",
+        //     "user_id": "U02RCUYKPK4",
+        //     "user_name": "sophie.fogel"
+        //   }, {
+        //     "created_at": "2023-04-17T18:55:48.752000",
+        //     "fields": [{"title": "Dog name", "value": "yrtyrt"}, {
+        //       "title": "Is your dog friendly with other dogs?",
+        //       "value": "ghjghj"
+        //     }, {"title": "Are you bringing your dog to work tomorrow?", "value": "No"}],
+        //     "form_id": "642aabdb1ef24e18c6d95fab",
+        //     "formatted_date": "Apr. 17, 2023",
+        //     "formatted_time": "18:55",
+        //     "id": "643d6c04f02800015e0d3c48",
+        //     "user_id": "U02RCUYKPK4",
+        //     "user_name": "sophie.fogel"
+        //   }, {
+        //     "created_at": "2023-04-17T18:56:00.230000",
+        //     "fields": [{"title": "Dog name", "value": "qweqwe"}, {
+        //       "title": "Is your dog friendly with other dogs?",
+        //       "value": "fghfgh"
+        //     }, {"title": "Are you bringing your dog to work tomorrow?", "value": "Yes"}],
+        //     "form_id": "642aabdb1ef24e18c6d95fab",
+        //     "formatted_date": "Apr. 17, 2023",
+        //     "formatted_time": "18:56",
+        //     "id": "643d6c10f02800015e0d3c49",
+        //     "user_id": "U02RCUYKPK4",
+        //     "user_name": "sophie.fogel"
+        //   }, {
+        //     "created_at": "2023-04-17T18:56:20.480000",
+        //     "fields": [{"title": "Dog name", "value": "trty"}, {
+        //       "title": "Is your dog friendly with other dogs?",
+        //       "value": "fghfgh"
+        //     }, {"title": "Are you bringing your dog to work tomorrow?", "value": "Yes"}],
+        //     "form_id": "642aabdb1ef24e18c6d95fab",
+        //     "formatted_date": "Apr. 17, 2023",
+        //     "formatted_time": "18:56",
+        //     "id": "643d6c24f02800015e0d3c4a",
+        //     "user_id": "U02RCUYKPK4",
+        //     "user_name": "sophie.fogel"
+        //   }, {
+        //     "created_at": "2023-04-17T18:56:29.305000",
+        //     "fields": [{"title": "Dog name", "value": "wrwer"}, {
+        //       "title": "Is your dog friendly with other dogs?",
+        //       "value": "fghfgh"
+        //     }, {"title": "Are you bringing your dog to work tomorrow?", "value": "Yes"}],
+        //     "form_id": "642aabdb1ef24e18c6d95fab",
+        //     "formatted_date": "Apr. 17, 2023",
+        //     "formatted_time": "18:56",
+        //     "id": "643d6c2df02800015e0d3c4b",
+        //     "user_id": "U02RCUYKPK4",
+        //     "user_name": "sophie.fogel"
+        //   }, {
+        //     "created_at": "2023-04-17T18:56:39.064000",
+        //     "fields": [{"title": "Dog name", "value": "qweqwe"}, {
+        //       "title": "Is your dog friendly with other dogs?",
+        //       "value": "ertret"
+        //     }, {"title": "Are you bringing your dog to work tomorrow?", "value": "Yes"}],
+        //     "form_id": "642aabdb1ef24e18c6d95fab",
+        //     "formatted_date": "Apr. 17, 2023",
+        //     "formatted_time": "18:56",
+        //     "id": "643d6c37f02800015e0d3c4c",
+        //     "user_id": "U02RCUYKPK4",
+        //     "user_name": "sophie.fogel"
+        //   }],
+        //   "total": 11
+        // };
+
+        formName.value = data.form_name;
         submissions.value = data.submissions;
-        lastPage.value = data.last_page;
+        lastPage.value = data.total;
       }
     };
 
@@ -132,6 +285,8 @@ export default defineComponent({
     });
 
     return {
+      loading,
+      formName,
       slashCommand,
       exportType,
       submissions,

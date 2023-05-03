@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="mygrid-item opacity-75 p-7 rounded-xl shadow-md w-full md:w-1/3 lg:w-1/4 m-4">
     <div class="p-2">
       <div>
         Submitted by {{ submission.user_name }}
@@ -11,7 +11,7 @@
 
     <div v-for="field in submission.fields" :key="field.id" class="p-2">
       <div class="font-semibold">
-        {{ field.display_title }}
+        {{ field.title }}
       </div>
       <div>
         {{ field.value }}

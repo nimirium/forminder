@@ -1,6 +1,5 @@
 export interface SubmissionField {
-  id: string;
-  display_title: string;
+  title: string;
   value: string;
 }
 
