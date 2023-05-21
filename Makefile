@@ -1,6 +1,6 @@
 .PHONY: all release run-mongo run-worker build-ui setup-server run-server build-dev-ui build-release-ui clean
 
-all: run-worker build-dev-ui run-server
+dev: run-worker build-dev-ui run-server
 release: build-release-ui
 
 run-mongo:

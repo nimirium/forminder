@@ -6,7 +6,7 @@ import re
 import shlex
 
 import openpyxl
-from flask import Blueprint, request, Response, send_file, session, render_template, jsonify
+from flask import Blueprint, request, Response, send_file, session, jsonify
 from openpyxl.utils import get_column_letter
 
 from src import constants
@@ -16,7 +16,8 @@ from src.services import submissions_service, forms_service, schedule_management
 from src.services.pagination_service import handle_pagination
 from src.slack_api.slack_user import SlackUser
 from src.slack_ui import responses as slack_ui_responses
-from views.view_utils import verify_slack_request, user_logged_in, form_visible_to_user
+from views.auth import user_logged_in_api
+from views.view_utils import verify_slack_request, form_visible_to_user
 
 urls_v1 = Blueprint('views_v1', __name__)
 
@@ -88,7 +89,7 @@ def slack_interactive_endpoint():
 
 
 @urls_v1.route('/forms', methods=['GET'])
-@user_logged_in
+@user_logged_in_api
 def forms_view():
     page = int(request.args.get('page', 1))
     per_page = min(int(request.args.get('per_page', 10)), 100)
@@ -105,7 +106,7 @@ def forms_view():
 
 
 @urls_v1.route('/submissions', methods=['GET'])
-@user_logged_in
+@user_logged_in_api
 @form_visible_to_user
 def submissions_view():
     # noinspection PyTypeHints
@@ -132,7 +133,7 @@ def submissions_view():
 
 
 @urls_v1.route('/submissions/export/csv')
-@user_logged_in
+@user_logged_in_api
 @form_visible_to_user
 def export_submissions_csv():
     # noinspection PyUnresolvedReferences
@@ -158,7 +159,7 @@ def export_submissions_csv():
 
 
 @urls_v1.route('/submissions/export/xlsx')
-@user_logged_in
+@user_logged_in_api
 @form_visible_to_user
 def export_submissions_xlsx():
     # noinspection PyUnresolvedReferences

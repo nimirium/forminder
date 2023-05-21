@@ -1,4 +1,5 @@
 export interface SubmissionField {
+  id: string;
   title: string;
   value: string;
 }

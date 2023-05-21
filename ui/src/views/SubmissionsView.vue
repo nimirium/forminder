@@ -105,6 +105,7 @@ import { defineComponent, ref, onMounted } from "vue";
 import SubmissionCard from "@/components/SubmissionCard.vue";
 import { useRoute } from "vue-router";
 import type { Submission } from "@/types/submissions";
+import {apiURL} from "@/config/config";
 
 
 export default defineComponent({
@@ -127,14 +128,14 @@ export default defineComponent({
     const downloadData = () => {
       const exportUrl =
         exportType.value === "csv"
-          ? "/export-submissions-csv"
-          : "/export-submissions-xlsx";
+          ? apiURL + "/api/v1/submissions/export/csv"
+          : apiURL + "/api/v1/submissions/export/xlsx";
       window.location.href = exportUrl;
     };
 
     const fetchSubmissions = async () => {
       const response = await fetch(
-        `/api/v1/submissions?formId=${formId}&page=${page.value}&per_page=${perPage.value}`
+          apiURL + `/api/v1/submissions?formId=${formId}&page=${page.value}&per_page=${perPage.value}`
       );
 
       loading.value = false;

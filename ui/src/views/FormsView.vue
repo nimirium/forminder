@@ -79,6 +79,7 @@
 <script lang="ts">
 import {defineComponent, getCurrentInstance, watch} from "vue";
 import type {Form} from "@/types/form";
+import {apiURL} from "@/config/config";
 
 export default defineComponent({
   name: "FormsView",
@@ -101,8 +102,12 @@ export default defineComponent({
       this.loading = true;
       try {
         const response = await fetch(
-            `/api/v1/forms?page=${this.page}&per_page=${this.per_page}`
+            apiURL + `/api/v1/forms?page=${this.page}&per_page=${this.per_page}`
         );
+        if (response.status === 401) {
+          window.location.href = '/login';
+          return;
+        }
         if (!response.ok) {
           this.loading = false;
           throw new Error("Network response was not ok");

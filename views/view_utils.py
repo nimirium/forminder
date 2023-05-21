@@ -24,44 +24,6 @@ def verify_slack_request(func, *args, **kwargs):
     return wrapper
 
 
-def user_logged_in(func, *args, **kwargs):
-    def wrapper():
-        if request.args.get('code') and ('access_token' not in session or 'user_data' not in session):
-            # OAuth2: Exchange the authorization code for an access token
-            code = request.args.get('code')
-            payload = {
-                'client_id': SLACK_CLIENT_ID,
-                'client_secret': SLACK_CLIENT_SECRET,
-                'code': code
-            }
-            response = requests.post(SLACK_OAUTH_URL, data=payload)
-            response_data = response.json()
-
-            if 'access_token' not in response_data:
-                return redirect(url_for('catch_all', path='login'))
-
-            # Fetch user information
-            auth_token = response_data['access_token']
-            user_id = response_data['authed_user']['id']
-            headers = {'Authorization': f"Bearer {auth_token}"}
-            user_response = requests.get(SLACK_USER_INFO_URL, headers=headers, params={'user': user_id})
-            user_data = user_response.json()
-
-            if user_data['ok']:
-                session['access_token'] = auth_token
-                session['user_data'] = user_data['user']
-            else:
-                return redirect(url_for('catch_all', path='login'))
-
-        if 'access_token' not in session or 'user_data' not in session:
-            return redirect(url_for('catch_all', path='login'))
-        request.user = SlackUser(user_id=session['user_data']['id'])
-        return func(*args, **kwargs)
-
-    wrapper.__name__ = func.__name__
-    return wrapper
-
-
 def form_visible_to_user(func, *args, **kwargs):
     def wrapper():
         form_id = request.args.get('formId')

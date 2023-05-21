@@ -11,7 +11,8 @@ from pymongo import MongoClient
 from src.models.connect import connect_to_mongo
 from src.models.form import SlackForm
 from src.server_settings import MONGO_DB_URL, CustomRequest, SESSION_COOKIE_NAME, MONGO_DB_NAME
-from views.view_utils import user_logged_in, serve_ui
+from views.auth import user_logged_in_ui
+from views.view_utils import serve_ui
 from views.views_v1 import urls_v1
 
 logging.basicConfig(format='%(asctime)s - %(levelname)s - %(message)s', level=logging.INFO)
@@ -20,6 +21,11 @@ connect_to_mongo()
 pymongo_client = MongoClient(MONGO_DB_URL)
 
 app = Flask(__name__)
+
+if os.environ['FLASK_DEBUG']:
+    from flask_cors import CORS
+    CORS(app)
+
 app.request_class = CustomRequest
 
 app.config['SECRET_KEY'] = os.environ['SESSION_KEY']  # Replace with your secret key
@@ -46,7 +52,7 @@ def user_is_logged_in():
 
 
 @app.route("/logout")
-@user_logged_in
+@user_logged_in_ui
 def logout():
     if "access_token" in session:
         session.pop("access_token")
@@ -76,13 +82,13 @@ app.register_blueprint(urls_v1, url_prefix='/api/v1')
 
 
 @app.route('/forms', methods=['GET'])
-@user_logged_in
+@user_logged_in_ui
 def forms_ui():
     return serve_ui('forms')
 
 
 @app.route('/submissions', methods=['GET'])
-@user_logged_in
+@user_logged_in_ui
 def submissions_ui():
     return serve_ui('submissions')
 
