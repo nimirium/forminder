@@ -2,7 +2,7 @@
 
 Effortlessly manage form-filling on Slack. Create customized forms, schedule reminders, and streamline your workflow with ease.
 
-![forminder-mascot](ui/src/assets/forminder_no_bg.png)
+<img src="ui/src/assets/forminder_no_bg.png" width="350">
 
 ## About
 
