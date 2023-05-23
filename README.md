@@ -6,7 +6,9 @@ Effortlessly manage form-filling on Slack. Create customized forms, schedule rem
 
 ## About
 
-This is the source code of the "Forminder" slack extension.
+This is the source code of the "Forminder" slack extension and website.
+
+Try it out at www.slack-forminder.com
 
 This code contains
 
