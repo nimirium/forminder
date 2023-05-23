@@ -1,3 +1,5 @@
+import os
+
 import requests
 from flask import jsonify, request, session, redirect, url_for
 import functools
@@ -60,11 +62,23 @@ def user_logged_in_ui(func):
     return wrapper
 
 
+def setup_for_debug():
+    """ This is needed to run locally without HTTPS """
+    session['team_id'] = os.environ['DEV_TEAM_ID']
+    session['user_data'] = {
+        'id': os.environ['DEV_USER_ID'],
+        'team_id': os.environ['DEV_TEAM_ID'],
+    }
+    request.user = SlackUser(user_id=session['user_data']['id'])
+
+
 def user_logged_in_api(func):
     """ Decorator - make sure user is logged in, if not, return 401 """
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
-        if not slack_auth():
+        if os.environ.get('FLASK_DEBUG'):
+            setup_for_debug()
+        elif not slack_auth():
             return jsonify({"error": "Unauthorized"}), 401
         return func(*args, **kwargs)
 

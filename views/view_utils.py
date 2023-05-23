@@ -2,19 +2,16 @@ import json
 import os
 
 import bson
-import requests
-from flask import request, Response, session, redirect, url_for, make_response, send_from_directory
-from jinja2 import Environment, FileSystemLoader
+from flask import request, Response, make_response, send_from_directory
 from slack_sdk.signature import SignatureVerifier
 
 from src.models.form import SlackForm
-from src.server_settings import SLACK_CLIENT_ID, SLACK_CLIENT_SECRET, SLACK_OAUTH_URL, SLACK_USER_INFO_URL
-from src.slack_api.slack_user import SlackUser
 
 slack_verifier = SignatureVerifier(os.environ['SIGNING_SECRET'])
 
 
 def verify_slack_request(func, *args, **kwargs):
+    """ Decorator for endpoints that handle requests from slack """
     def wrapper():
         if slack_verifier.is_valid_request(request.get_data(), request.headers):
             return func(*args, **kwargs)
@@ -46,12 +43,7 @@ def form_visible_to_user(func, *args, **kwargs):
 
 
 def serve_ui(path: str):
+    """ Serve Vue.js website """
     if path and os.path.exists('ui/dist/' + path):
         return send_from_directory('ui/dist', path)
-    else:
-        if hasattr(request, 'user') and request.user:
-            user = request.user.to_dict()
-            response = make_response(send_from_directory('ui/dist', 'index.html'))
-            response.headers['X-User'] = json.dumps(user)
-            return response
-        return send_from_directory('ui/dist', 'index.html')
+    return send_from_directory('ui/dist', 'index.html')

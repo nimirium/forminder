@@ -14,6 +14,11 @@ client = get_slack_client()
 
 
 def schedule_slack_message(schedule: FormSchedule, event: ScheduledEvent):
+    """
+    Schedules a message to be sent to slack for a specific time.
+    The message itself is the reminder to fill the form.
+    :return: Scheduled message ID in slack
+    """
     form = SlackForm.objects(id=schedule.form_id).first()
     blocks = slack_ui_blocks.form_slack_ui_blocks(form, action_id=constants.SUBMIT_FORM_SCHEDULED)
     result = client.chat_scheduleMessage(

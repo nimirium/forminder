@@ -25,6 +25,7 @@ urls_v1 = Blueprint('views_v1', __name__)
 @urls_v1.route("/slash-command", methods=['POST'])
 @verify_slack_request
 def slack_webhook():
+    """ Slash command handler """
     user = SlackUser(user_id=request.form['user_id'])
     response_url = request.form['response_url']
     command_text = (request.form['text'] or '').replace("”", '"').replace("“", '"')
@@ -51,6 +52,7 @@ def slack_webhook():
 @urls_v1.route("/interactive", methods=['POST'])
 @verify_slack_request
 def slack_interactive_endpoint():
+    """ Slack interactive handler - for button presses, select selections, etc. """
     payload = json.loads(request.form['payload'])
     user = SlackUser(user_id=payload['user']['id'])
     response_url = payload['response_url']
@@ -64,7 +66,7 @@ def slack_interactive_endpoint():
         if action_id == constants.DELETE_FORM:
             result = forms_service.delete_form_command(value, user, response_url)
         elif action_id == constants.FILL_FORM_NOW:
-            result = forms_service.fill_form_now_command(value, response_url)
+            result = forms_service.fill_form_now_btn(value, response_url)
         elif action_id == constants.SCHEDULE_FORM:
             result = schedule_management_service.schedule_form_command(value, user, response_url)
         elif action_id == constants.CREATE_FORM_SCHEDULE:
@@ -91,6 +93,7 @@ def slack_interactive_endpoint():
 @urls_v1.route('/forms', methods=['GET'])
 @user_logged_in_api
 def forms_view():
+    """ Get forms with pagination """
     page = int(request.args.get('page', 1))
     per_page = min(int(request.args.get('per_page', 10)), 100)
     team_id = session['user_data']['team_id']
@@ -109,6 +112,7 @@ def forms_view():
 @user_logged_in_api
 @form_visible_to_user
 def submissions_view():
+    """ Get form submissions with pagination """
     # noinspection PyTypeHints
     request.slack_form: SlackForm
     form_id = str(request.slack_form.id)
@@ -136,6 +140,7 @@ def submissions_view():
 @user_logged_in_api
 @form_visible_to_user
 def export_submissions_csv():
+    """ Export form submissions as CSV """
     # noinspection PyUnresolvedReferences
     form_id = str(request.slack_form.id)
     form = SlackForm.objects.get(id=form_id)
@@ -162,6 +167,7 @@ def export_submissions_csv():
 @user_logged_in_api
 @form_visible_to_user
 def export_submissions_xlsx():
+    """ Export form submissions as XLSX """
     # noinspection PyUnresolvedReferences
     form_id = str(request.slack_form.id)
     form = SlackForm.objects.get(id=form_id)

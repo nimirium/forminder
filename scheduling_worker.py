@@ -18,6 +18,7 @@ client = get_slack_client()
 
 
 def schedule_future_messages():
+    """ Schedule next Form-Filling messages to be sent in the next 7 days """
     st = time.perf_counter()
     logging.info("Scheduling slack messages...")
     for schedule in FormSchedule.objects.all():
@@ -37,6 +38,7 @@ def schedule_future_messages():
 
 
 def clear_scheduled_messages():
+    """ Clear scheduled messages for deleted schedules """
     logging.info("Clearing slack messages...")
     now = datetime.datetime.now(datetime.timezone.utc)
     latest = now + datetime.timedelta(days=7)

@@ -1,6 +1,13 @@
+"""
+Schedule management service
+- Create form schedule
+- Delete form schedule
+"""
+
 import json
 import logging
 from threading import Thread
+from typing import Dict
 
 import requests as requests
 from dotenv import load_dotenv
@@ -21,17 +28,20 @@ load_dotenv()
 client = get_slack_client()
 
 
-def reminder_select(form, validation_error: str = None):
+def reminder_select(form: SlackForm, validation_error: str = None) -> Dict:
+    """ Returns Slack UI blocks for schedule creation """
     channels_response = client.conversations_list()
     send_to_options = ['me'] + ['#' + x['name'] for x in channels_response['channels']]
     return slack_ui_blocks.reminder_select_block(form, send_to_options, validation_error)
 
 def schedule_form_command(form_id, user, response_url):
+    """ Handler for Schedule Form button """
     Thread(target=send_schedule_form_response, kwargs=dict(form_id=form_id, user=user, response_url=response_url)).start()
     return
 
 
 def send_schedule_form_response(form_id, user: SlackUser, response_url):
+    """ Calls Slack API to respond with the form creation UI """
     if FormSchedule.objects(form_id=form_id).count() >= constants.MAX_SCHEDULES_PER_FORM:
         return requests.post(response_url, json.dumps(
             slack_ui_responses.text_response(f"A form may have up to {constants.MAX_SCHEDULES_PER_FORM} schedules")))
@@ -40,7 +50,8 @@ def send_schedule_form_response(form_id, user: SlackUser, response_url):
     requests.post(response_url, json.dumps(result))
 
 
-def create_form_schedule_command(form_id, user: SlackUser, schedule_form_state, response_url):
+def create_form_schedule_command(form_id: str, user: SlackUser, schedule_form_state: Dict, response_url: str):
+    """ Handle creation of a form schedule """
     days_of_the_week = []
     at_time = None
     send_to = None
@@ -62,6 +73,7 @@ def create_form_schedule_command(form_id, user: SlackUser, schedule_form_state, 
 
 
 def create_schedule_and_respond(form_id, user: SlackUser, days_of_the_week, at_time, send_to, response_url):
+    """ Handle creation of a form schedule - thread """
     form = SlackForm.objects(team_id=user.team_id, id=form_id).first()
     if FormSchedule.objects(form_id=form_id).count() >= constants.MAX_SCHEDULES_PER_FORM:
         return requests.post(response_url, json.dumps(
@@ -118,13 +130,14 @@ def create_schedule_and_respond(form_id, user: SlackUser, days_of_the_week, at_t
     requests.post(response_url, json.dumps(result))
 
 
-def delete_schedule_command(schedule_id, user, response_url):
+def delete_schedule_command(schedule_id: str, user: "SlackUser", response_url: str) -> None:
+    """ Handle schedule deletion """
     Thread(target=delete_schedule_and_respond,
            kwargs=dict(schedule_id=schedule_id, user=user, response_url=response_url)).start()
-    return
 
 
 def delete_schedule_and_respond(schedule_id, user, response_url):
+    """ Delete a schedule and it's scheduled events """
     schedule = FormSchedule.objects(id=schedule_id).first()
     if schedule:
         form = SlackForm.objects(id=schedule.form_id).first()

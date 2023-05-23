@@ -43,10 +43,6 @@ limiter = Limiter(
 )
 
 
-def user_is_logged_in():
-    return 'access_token' in session and 'user_data' in session
-
-
 @app.route("/logout")
 @user_logged_in_ui
 def logout():
@@ -93,4 +89,5 @@ def submissions_ui():
 @app.route('/', defaults={'path': ''})
 @app.route('/<path:path>')
 def catch_all(path):
+    """ Serve Vue.js """
     return serve_ui(path)

@@ -1,8 +1,21 @@
+"""
+Slack Forms Service:
+- Create form
+- List forms
+- Delete form
+- Fill form
+
+Process the request and return a Slack UI blocks response.
+If a request needs to access a DB, run a thread which will process the request. The thread calls Slack API with the
+real response.
+"""
+
+
 import argparse
 import json
 import logging
 from threading import Thread
-from typing import List
+from typing import List, Dict, Optional
 
 import requests as requests
 
@@ -23,7 +36,16 @@ create_form_parser.add_argument("--multiline-field", action='append', nargs='?',
 create_form_parser.add_argument("--select-field", action='append', nargs='?', default=[])
 
 
-def create_form_command(user: SlackUser, command_args: List[str], command_text, response_url):
+def create_form_command(user: SlackUser, command_args: List[str], command_text, response_url) -> Dict:
+    """
+    Handle slack slash command - /forminder create
+
+    :param user: Slack user
+    :param command_args: args after "/forminder create"
+    :param command_text: unparsed command text
+    :param response_url: Slack response URL
+    :return: Slack UI response or None
+    """
     if len(command_args) == 0:
         logging.info(f"[{user.username}] from [{user.team_id}] - no command args, returning help text")
         return slack_ui.responses.text_response(slack_ui.text.form_create_help_text)
@@ -72,7 +94,8 @@ def create_form_command(user: SlackUser, command_args: List[str], command_text, 
                        response_url=response_url)).start()
 
 
-def create_form__save_and_respond(team_id, user_id, user_name, name, fields, command_text, response_url):
+def create_form__save_and_respond(team_id, user_id, user_name, name, fields, command_text, response_url) -> None:
+    """ Checks if a form with this name already exists; saves it and calls slack API with the UI response """
     if SlackForm.objects(team_id=team_id, name=name).count() > 0:
         logging.info(f"[{user_name}] from [{team_id}] - form name '{name}' already exists for this team")
         response = slack_ui.responses.text_response(
@@ -94,22 +117,25 @@ def create_form__save_and_respond(team_id, user_id, user_name, name, fields, com
 
 
 def list_forms_command(user: SlackUser, response_url: str, page: int = 1):
+    """ Handler for /forminder list """
     Thread(target=list_forms__fetch_and_respond, kwargs=dict(user=user, response_url=response_url, page=page)).start()
 
 
 def list_forms__fetch_and_respond(user: SlackUser, response_url: str, page: int = 1):
+    """ Get Slack forms list with pagination, calls Slack API with a slack UI response """
     blocks = list_of_forms_blocks(user, page)
     response = dict(blocks=blocks)
     requests.post(response_url, json.dumps(response))
 
 
 def delete_form_command(form_id, user: SlackUser, response_url):
+    """ Handler for form deletion """
     Thread(target=delete_form_and_respond,
            kwargs=dict(form_id=form_id, user=user, response_url=response_url)).start()
-    return
 
 
 def delete_form_and_respond(form_id, user, response_url):
+    """ Delete a form and it's schedules and scheduled events. Calls slack API with a UI response. """
     form = SlackForm.objects(id=form_id).first()
     if not form:
         response = slack_ui.responses.text_response("Couldn't delete form because it does not exist")
@@ -128,12 +154,14 @@ def delete_form_and_respond(form_id, user, response_url):
     requests.post(response_url, json.dumps(response))
 
 
-def fill_form_now_command(form_id, response_url):
+def fill_form_now_btn(form_id, response_url):
+    """ Handler for "fill now" button """
     Thread(target=send_fill_now_response, kwargs=dict(form_id=form_id, response_url=response_url)).start()
     return
 
 
 def send_fill_now_response(form_id, response_url):
+    """ Calls Slack API with the UI blocks of the form, so the user can fill it. """
     form = SlackForm.objects(id=form_id).first()
     blocks = []
     for block in slack_ui.blocks.form_slack_ui_blocks(form, action_id=constants.SUBMIT_FORM_NOW):
@@ -143,11 +171,16 @@ def send_fill_now_response(form_id, response_url):
 
 
 def fill_form_command(user: SlackUser, command_args: List[str], response_url, page: int = 1):
+    """ Handler for /forminder fill """
     form_name = ' '.join(command_args)
     Thread(target=send_fill_form_response, kwargs=dict(user=user, form_name=form_name, response_url=response_url, page=page)).start()
 
 
-def send_fill_form_response(user: SlackUser, form_name, response_url, page: int = 1):
+def send_fill_form_response(user: SlackUser, form_name: Optional[str], response_url: str, page: int = 1):
+    """
+    Calls Slack API with the UI blocks of the form.
+    If no form name was provided, will return a list of forms to choose for filling.
+    """
     if not form_name:
         logging.info(f"[{user.username}] from [{user.team_id}] - fill form, returning a list of forms to fill")
         all_forms = SlackForm.objects.filter(team_id=user.team_id)
@@ -156,7 +189,7 @@ def send_fill_form_response(user: SlackUser, form_name, response_url, page: int 
         logging.info(f"[{user.username}] from [{user.team_id}] - fill form {form_name}")
         form = SlackForm.objects.filter(name__iexact=form_name, team_id=user.team_id).first()
         if form:
-            return fill_form_now_command(form.id, response_url)
+            return fill_form_now_btn(form.id, response_url)
         else:
             result = slack_ui.blocks.select_form_to_fill(f"Could not find a form that's called '{form_name}'. "
                                                        f"Please select one of the existing forms.")

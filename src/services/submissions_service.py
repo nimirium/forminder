@@ -9,6 +9,10 @@ from src import slack_ui
 
 
 def submit_scheduled_form(form_id, user: SlackUser, payload, response_url):
+    """
+    Handles a user-submitted a form.
+    This code is for scheduled form submissions.
+    """
     fields = []
     inputs = [x for x in payload['message']['blocks'] if x['type'] == 'input']
     questions = {}
@@ -36,6 +40,10 @@ def submit_form_and_respond(submission: Submission, response_url):
 
 
 def submit_form_now(form_id, user: SlackUser, payload, response_url):
+    """
+    Handles a user-submitted a form.
+    This code is for "Fill now" form submissions.
+    """
     fields = []
     form = SlackForm.objects(id=form_id).first()
     for slack_form in payload['state']['values'].values():

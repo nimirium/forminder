@@ -17,14 +17,17 @@ FORM_FIELD_SUBMISSION = 'form-field-submission'
 FORM_FIELD = 'form-field'
 SEND_SCHEDULE_TO = 'send-schedule-to'
 
+# Pagination action suffixes
 FIRST_PAGE = 'first_page'
 PREVIOUS_PAGE = 'previous_page'
 NEXT_PAGE = 'next_page'
 LAST_PAGE = 'last_page'
 
+# Page action prefixes
 LIST_FORMS_PREFIX = 'list_forms_'
 FILL_FORMS_PREFIX = 'fill_forms_'
 
+# Other constants
 FORM_ITEMS_PER_PAGE = 5
 DEFAULT_SCHEDULE_TIME = '09:00'
 MAX_SCHEDULES_PER_FORM = 4

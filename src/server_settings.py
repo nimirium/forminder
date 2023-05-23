@@ -14,6 +14,7 @@ SESSION_COOKIE_NAME = 'session'
 
 
 class CustomRequest(FlaskRequest):
+    """ Override Flask request class. Helps with typing """
     user: Optional['SlackUser']
 
     def __init__(self, *args, **kwargs):

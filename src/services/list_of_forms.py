@@ -1,4 +1,5 @@
 import os
+from typing import List, Dict
 
 import math
 
@@ -12,7 +13,7 @@ from src.slack_ui.blocks import text_block_item, divider_block, form_list_item, 
 from src.slack_ui.text import no_forms_text
 
 
-def list_of_forms_blocks(user: SlackUser, page: int = 1):
+def list_of_forms_blocks(user: SlackUser, page: int = 1) -> List[Dict]:
     """
     Slack UI blocks with a list of Forms
     """

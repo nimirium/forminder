@@ -4,7 +4,7 @@ import cachetools as cachetools
 from slack_sdk import WebClient
 
 # Cache with a max size of 100 and a 2-minute (120 seconds) expiration time
-_users_cache = cachetools.TTLCache(maxsize=100, ttl=120)
+_users_cache = cachetools.TTLCache(maxsize=1000, ttl=120)
 _slack_client = None
 
 
@@ -16,6 +16,7 @@ def get_slack_client():
 
 
 def get_users_info(user_id):
+    """ Calls slack API to get user info, and saves it in a local cache. """
     if user_id not in _users_cache:
         client = get_slack_client()
         users_info = client.users_info(user=user_id)

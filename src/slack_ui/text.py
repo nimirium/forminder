@@ -1,3 +1,5 @@
+""" Texts for Slack UI """
+
 from src.constants import SLASH_COMMAND
 
 help_text = f""":information_desk_person: Usage:

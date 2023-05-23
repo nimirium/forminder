@@ -1,6 +1,7 @@
 import datetime
 import logging
 from enum import Enum
+from typing import List
 
 import pytz as pytz
 from mongoengine import Document, StringField, ListField, ReferenceField, DateTimeField, EmbeddedDocument, \
@@ -35,7 +36,7 @@ class FormSchedule(Document):
     time_local = EmbeddedDocumentField(TimeField)
     meta = dict(strict=False)
 
-    def save_and_schedule_next(self):
+    def save_and_schedule_next(self) -> "ScheduledEvent":
         self.save()
         try:
             next_event = self.schedule_next()
@@ -45,7 +46,7 @@ class FormSchedule(Document):
             raise e
         return next_event
 
-    def schedule_next(self):
+    def schedule_next(self) -> "ScheduledEvent":
         execution_time_utc = self.get_next_time()
         next_event = ScheduledEvent(
             schedule=self,
@@ -55,7 +56,8 @@ class FormSchedule(Document):
         next_event.save()
         return next_event
 
-    def get_next_time(self):
+    def get_next_time(self) -> datetime.datetime:
+        """ Returns the next time when this schedule should happen """
         tz = pytz.timezone(self.timezone)
         now_local = datetime.datetime.now(datetime.timezone.utc).astimezone(tz)
         target_time_local = now_local.replace(hour=self.time_local.hour,
@@ -69,7 +71,8 @@ class FormSchedule(Document):
             target_time_local += datetime.timedelta(days=1)
         return target_time_local.astimezone(datetime.timezone.utc)
 
-    def get_next_times(self, days):
+    def get_next_times(self, days) -> List[datetime.datetime]:
+        """ Returns the next times when this schedule should happen, in the next [days] number of days """
         times = []
         tz = pytz.timezone(self.timezone)
         now_local = datetime.datetime.now(datetime.timezone.utc).astimezone(tz)
@@ -87,7 +90,8 @@ class FormSchedule(Document):
             target_time_local += datetime.timedelta(days=1)
         return times
 
-    def get_events_to_schedule(self, days):
+    def get_events_to_schedule(self, days) -> List["ScheduledEvent"]:
+        """ Returns this schedule's events, in the next [days] number of days """
         events = []
         for execution_time_utc in self.get_next_times(days):
             existing = ScheduledEvent.objects(schedule=self, execution_time_utc=execution_time_utc).first()
@@ -102,12 +106,13 @@ class FormSchedule(Document):
                 events.append(existing)
         return events
 
-    def schedule_description(self):
+    def schedule_description(self) -> str:
         weekdays = ', '.join([DAYS_OF_THE_WEEK[weekday] for weekday in self.days_of_the_week])
         return f"{weekdays} at {str(self.time_local.hour).zfill(2)}:{str(self.time_local.minute).zfill(2)} ({self.timezone})"
 
 
-    def send_to_name(self):
+    def send_to_name(self) -> str:
+        """ Where this scheduled form will be sent. Either a slack channel, or a username """
         if self.send_to.startswith('#'):
             return self.send_to
         return '@' + SlackUser(self.send_to).username

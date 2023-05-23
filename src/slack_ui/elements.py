@@ -1,3 +1,7 @@
+"""
+Slack UI block elements. A UI element is a part of a UI block. For more info read about Slack Block Kit.
+"""
+
 import os
 
 from src import constants

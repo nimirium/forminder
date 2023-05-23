@@ -1,3 +1,7 @@
+"""
+Slack UI blocks. For more info read about Slack Block Kit.
+"""
+
 from typing import List, Dict
 
 import math
@@ -91,7 +95,7 @@ def actions_block(button_elements: List[Dict]):
     }
 
 
-def reminder_select_block(form, send_to_options, validation_error: str = None):
+def reminder_select_block(form, send_to_options, validation_error: str = None) -> Dict:
     result = {
         "blocks": [
             text_block_item(f"Scheduling '{form.name}'"),

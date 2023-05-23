@@ -5,7 +5,18 @@ from src.models.form import SlackForm
 from src.services import forms_service
 
 
-def handle_pagination(prefix, page_button, user, response_url, current_page):
+def handle_pagination(prefix: str, page_button: str, user: "SlackUser", response_url: str, current_page: int) -> None:
+    """
+    Handlers for the "next", "prev", "first" and "last" button in slack,
+    for the *forms list* and *fill forms* views.
+
+
+    :param prefix: Slack action prefix
+    :param page_button: pagination button that was clicked
+    :param user:
+    :param response_url: Slack response URL
+    :param current_page:
+    """
     if prefix == constants.LIST_FORMS_PREFIX:
         if page_button == constants.FIRST_PAGE:
             return forms_service.list_forms_command(user, response_url, 1)

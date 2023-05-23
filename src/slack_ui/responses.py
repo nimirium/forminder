@@ -1,3 +1,8 @@
+"""
+Slack UI responses.
+A UI response contains one or many Slack blocks.
+"""
+
 from src.slack_ui.blocks import text_block_item
 from src.slack_ui.elements import view_submissions_button_element
 from src.slack_ui.text import help_text
