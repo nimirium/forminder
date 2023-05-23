@@ -80,6 +80,7 @@
 import {defineComponent, getCurrentInstance, watch} from "vue";
 import type {Form} from "@/types/form";
 import {apiURL} from "@/config/config";
+import {logout} from "@/util/login-and-logout";
 
 export default defineComponent({
   name: "FormsView",
@@ -105,7 +106,7 @@ export default defineComponent({
             apiURL + `/api/v1/forms?page=${this.page}&per_page=${this.per_page}`
         );
         if (response.status === 401) {
-          window.location.href = '/login';
+          logout();
           return;
         }
         if (!response.ok) {

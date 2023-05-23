@@ -19,11 +19,11 @@ import WelcomeToForminder from "@/components/WelcomeToForminder.vue";
 </template>
 
 <script lang="ts">
-import {useRoute} from "vue-router";
-import {computed} from "vue";
 
-const route = useRoute();
-const afterLogin = computed(() => ['/forms', '/submissions'].includes(route?.path));
+import {hasSessionCookie} from "@/util/login-and-logout";
+
+const afterLogin = hasSessionCookie();
+
 
 export default {
   name: "HomeView",

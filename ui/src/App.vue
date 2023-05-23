@@ -1,12 +1,10 @@
 <script setup lang="ts">
 import {removeCodeUrlParameter} from "@/util/remove-url-parameter";
-import {useRoute} from "vue-router";
-import {computed} from "vue";
+import {hasSessionCookie} from "@/util/login-and-logout";
 
 removeCodeUrlParameter();
 
-const route = useRoute();
-const afterLogin = computed(() => ['/forms', '/submissions'].includes(route?.path));
+const afterLogin = hasSessionCookie();
 </script>
 
 <template>

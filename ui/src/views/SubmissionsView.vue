@@ -106,6 +106,7 @@ import SubmissionCard from "@/components/SubmissionCard.vue";
 import { useRoute } from "vue-router";
 import type { Submission } from "@/types/submissions";
 import {apiURL} from "@/config/config";
+import {logout} from "@/util/login-and-logout";
 
 
 export default defineComponent({
@@ -139,6 +140,11 @@ export default defineComponent({
       );
 
       loading.value = false;
+
+      if (response.status === 401) {
+        logout();
+        return;
+      }
 
       if (response.ok) {
         const data = await response.json();
