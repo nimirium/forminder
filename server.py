@@ -22,10 +22,6 @@ pymongo_client = MongoClient(MONGO_DB_URL)
 
 app = Flask(__name__)
 
-if os.environ['FLASK_DEBUG']:
-    from flask_cors import CORS
-    CORS(app)
-
 app.request_class = CustomRequest
 
 app.config['SECRET_KEY'] = os.environ['SESSION_KEY']  # Replace with your secret key
