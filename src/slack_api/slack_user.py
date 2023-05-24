@@ -6,7 +6,6 @@ class SlackUser:
         self.id = user_id
         user_info = get_users_info(self.id)
         self.username = user_info['username']
-        self.real_name = user_info['real_name']
         self.team_id = user_info['team_id']
         self.is_admin = user_info['is_admin']
         self.tz = user_info['tz']
@@ -15,7 +14,6 @@ class SlackUser:
         return {
             'id': self.id,
             'username': self.username,
-            'real_name': self.real_name,
             'team_id': self.team_id,
             'tz': self.tz,
         }

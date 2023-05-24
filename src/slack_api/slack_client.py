@@ -1,6 +1,7 @@
 import os
 
 import cachetools as cachetools
+from flask import session
 from slack_sdk import WebClient
 
 # Cache with a max size of 100 and a 2-minute (120 seconds) expiration time
@@ -19,24 +20,13 @@ def get_users_info(user_id):
     """ Calls slack API to get user info, and saves it in a local cache. """
     if user_id not in _users_cache:
         client = get_slack_client()
+        client.token = session['access_token']
         users_info = client.users_info(user=user_id)
         user_data = users_info.data['user']
         _users_cache[user_id] = {
             'is_admin': user_data['is_admin'],
             'tz': user_data['tz'],
             'username': user_data['name'],
-            'real_name': user_data['real_name'],
             'team_id': user_data['team_id'],
         }
     return _users_cache[user_id]
-
-
-#
-def user_is_admin(user_id):
-    user_info = get_users_info(user_id)
-    return user_info['is_admin']
-
-
-def get_users_tz(user_id):
-    user_info = get_users_info(user_id)
-    return user_info['tz']

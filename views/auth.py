@@ -69,6 +69,7 @@ def setup_for_debug():
         'id': os.environ['DEV_USER_ID'],
         'team_id': os.environ['DEV_TEAM_ID'],
     }
+    session['access_token'] = os.environ['SLACK_BOT_TOKEN']
     request.user = SlackUser(user_id=session['user_data']['id'])
 
 
